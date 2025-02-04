@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model Employee {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  employeeId Int?     @unique
+  phone     String?   @unique
+  name      String
+  password  String
+  role      Role     @default(EMPLOYEE)
+  storeId   Int?     
+  store     Store?   @relation(fields: [storeId], references: [id]) 
+  accessTo  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Store {
+  id            Int        @id @default(autoincrement())
+  name          String?
+  address       String?
+  storeLocation String?
+  mapsLocation  String?
+  phone         String?
+  employees     Employee[] 
+  bookings      Booking[]  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Package {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Int
+  description String?
+  title       String?
+  bookings    Booking[] 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Booking {
+  id            Int          @id @default(autoincrement())
+  date          DateTime?
+  time          String?
+  status        BookingStatus @default(PENDING)
+  customerName  String?
+  customerPhone String?
+  storeId       Int          
+  store         Store        @relation(fields: [storeId], references: [id])
+  packageId     Int          
+  package       Package      @relation(fields: [packageId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
