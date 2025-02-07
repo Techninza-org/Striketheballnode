@@ -40,5 +40,7 @@ adminRouter.delete('/package/:id', middleware.AdminMiddleware, adminController.d
 adminRouter.get('/booking', middleware.AdminMiddleware, adminController.getBookings)    
 //@ts-ignore
 adminRouter.get('/booking/:storeId', middleware.AdminMiddleware, adminController.getBookingsByStore)
+//@ts-ignore
+adminRouter.post('/booking', middleware.AdminMiddleware, adminController.createBooking)
 
 export default adminRouter

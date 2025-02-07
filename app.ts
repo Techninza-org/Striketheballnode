@@ -12,6 +12,7 @@ import multer from 'multer';
 import authRouter from './routes/auth.routes';
 import adminRouter from './routes/admin.routes';
 import empRouter from './routes/emp.routes';
+import customerRouter from './routes/customer.routes';
 
 const prisma = new PrismaClient();
 const app = express();
@@ -32,6 +33,11 @@ app.get('/ping', (_req, res) => {
     return res.status(200).send({ status: 200, message: 'pong' });
 });
 
+app.post('/webhook', (req, res) => {
+    console.log('Received data:', req.body);  
+    res.status(200).send('Webhook received successfully!');
+});
+
 app.get('/public/:filename', (req: Request, res: Response) => {
     const filename = req.params.filename;
     const filepath = path.resolve('./public/images/' + filename);
@@ -48,6 +54,7 @@ app.get('/public/:filename', (req: Request, res: Response) => {
 app.use('/auth', authRouter);
 app.use('/admin', adminRouter);
 app.use('/emp', empRouter);
+app.use('/customer', customerRouter);
 
 app.use(middleware.ErrorHandler);
 

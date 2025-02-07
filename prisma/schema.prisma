@@ -6,31 +6,38 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
 enum Role {
   ADMIN
   EMPLOYEE
+  SUBADMIN
+}
+
+enum BookingType {
+  Package
+  Custom
 }
 
 enum BookingStatus {
   PENDING
-  CONFIRMED
   CANCELLED
   COMPLETED
 }
 
 model Employee {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
   employeeId Int?     @unique
-  phone     String?   @unique
-  name      String
-  password  String
-  role      Role     @default(EMPLOYEE)
-  storeId   Int?     
-  store     Store?   @relation(fields: [storeId], references: [id]) 
-  accessTo  Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  phone      String?  @unique
+  name       String
+  password   String
+  isSubadmin Boolean  @default(false)
+  role       Role     @default(EMPLOYEE)
+  storeId    Int?
+  store      Store?   @relation(fields: [storeId], references: [id])
+  accessTo   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Store {
@@ -40,34 +47,46 @@ model Store {
   storeLocation String?
   mapsLocation  String?
   phone         String?
-  employees     Employee[] 
-  bookings      Booking[]  
+  employees     Employee[]
+  bookings      Booking[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 }
 
 model Package {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   name        String
   price       Int
+  overs       Int?
   description String?
   title       String?
-  bookings    Booking[] 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Booking {
-  id            Int          @id @default(autoincrement())
-  date          DateTime?
-  time          String?
+  id            Int           @id @default(autoincrement())
   status        BookingStatus @default(PENDING)
-  customerName  String?
-  customerPhone String?
-  storeId       Int          
-  store         Store        @relation(fields: [storeId], references: [id])
-  packageId     Int          
-  package       Package      @relation(fields: [packageId], references: [id])
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  storeId       Int
+  bookingType   BookingType
+  overs         Int?
+  price         Int?
+  store         Store         @relation(fields: [storeId], references: [id])
+  packageId     Int?
+  package       Package?       @relation(fields: [packageId], references: [id])
+  customerId    Int? 
+  customer      Customer?     @relation(fields: [customerId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Customer {
+  id        Int       @id @default(autoincrement())
+  email     String?   @unique
+  phone     String?   @unique
+  name      String
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }

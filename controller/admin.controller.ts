@@ -109,13 +109,7 @@ const createEmployee = async (req: ExtendedRequest, res: Response, next: NextFun
             });
         }
 
-        if(typeof storeId !== 'number') {
-            return res.status(400).send({
-                status: 400,
-                error: 'Invalid payload',
-                error_description: 'storeId must be a number.',
-            });
-        }
+        const s_id = parseInt(storeId);
 
         const employeeExist = await prisma.employee.findFirst({
             where: { OR: [{ email: email }, { phone: phone }] }
@@ -130,7 +124,7 @@ const createEmployee = async (req: ExtendedRequest, res: Response, next: NextFun
         }
 
         const storeExist = await prisma.store.findUnique({
-            where: { id: storeId }
+            where: { id: s_id }
         })
         if(!storeExist) {
             return res.status(400).send({
@@ -147,7 +141,7 @@ const createEmployee = async (req: ExtendedRequest, res: Response, next: NextFun
                 name,
                 email,
                 password: hash_password, 
-                storeId,
+                storeId: s_id,
                 accessTo,
                 employeeId,
                 phone,
@@ -269,13 +263,13 @@ const getEmployeeById = async (req: ExtendedRequest, res: Response, next: NextFu
 ////////////////////////////////////////////////////////////////////////// PACKAGE CONTROLLER //////////////////////////////////////////////////////////////////////////////
 const createPackage = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
-        const { name, price, title, description } = req.body;
-        const isValidPayload = helper.isValidatePaylod(req.body, ['name', 'price']);
+        const { name, price, title, description, overs } = req.body;
+        const isValidPayload = helper.isValidatePaylod(req.body, ['name', 'price', 'overs']);
         if (!isValidPayload) {
-            return res.send({ status: 400, error: 'Invalid payload', error_description: 'name, price are required.' });
+            return res.send({ status: 400, error: 'Invalid payload', error_description: 'name, price and overs are required.' });
         }
 
-        if(typeof price !== 'number') {
+        if(isNaN(Number(price))) {
             return res.send({ status: 400, error: 'Invalid payload', error_description: 'price must be a integer.' });
         }
         
@@ -283,8 +277,9 @@ const createPackage = async (req: ExtendedRequest, res: Response, next: NextFunc
             data: {
                 name,
                 title,
-                price,
+                price: parseInt(price),
                 description,
+                overs: parseInt(overs)
             },
         })
         return res.send({ valid: true, newPackage })
@@ -305,7 +300,7 @@ const getAllPackages = async (req: ExtendedRequest, res: Response, next: NextFun
 const updatePackage = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const { name, price, title, description } = req.body
+        const { name, price, title, description, overs } = req.body
         const updatedPackage = await prisma.package.update({
             where: { id: parseInt(id) },
             data: {
@@ -313,6 +308,7 @@ const updatePackage = async (req: ExtendedRequest, res: Response, next: NextFunc
                 title,
                 price,
                 description,
+                overs
             },
         })
         return res.send({ valid: true, updatedPackage })
@@ -350,7 +346,7 @@ const getPackageById = async (req: ExtendedRequest, res: Response, next: NextFun
 
 const getBookings = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
-        const bookings = await prisma.booking.findMany({orderBy: {createdAt: 'desc'}})
+        const bookings = await prisma.booking.findMany({orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
         return res.send({ valid: true, bookings })
     } catch (err) {
         return next(err)
@@ -364,12 +360,75 @@ const getBookingsByStore = async (req: ExtendedRequest, res: Response, next: Nex
         if(!store) {
             return res.send({ valid: false, error: 'Store not found.', error_description: 'Store does not exist' })
         }
-        const bookings = await prisma.booking.findMany({where: {storeId: parseInt(storeId)}, orderBy: {createdAt: 'desc'}})
+        const bookings = await prisma.booking.findMany({where: {storeId: parseInt(storeId)}, orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
         return res.send({ valid: true, bookings })
     } catch (err) {
         return next(err)
     }
 }
+
+const createBooking = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { packageId, storeId, customerId, bookingType, overs, price } = req.body;
+        const isValidPayload = helper.isValidatePaylod(req.body, ['storeId', 'customerId', 'bookingType']);
+        if(!isValidPayload) {
+            return res.send({ status: 400, error: 'Invalid payload', error_description: 'storeId, customerId, bookingType are required.' });
+        }
+        const customer = await prisma.customer.findUnique({where: {id: parseInt(customerId)}})
+        if(!customer) {
+            return res.send({ valid: false, error: 'Customer not found.', error_description: 'Customer does not exist' })
+        }
+        const store = await prisma.store.findUnique({where: {id: parseInt(storeId)}})
+        if(!store) {
+            return res.send({ valid: false, error: 'Store not found.', error_description: 'Store does not exist' })
+        }
+        if(bookingType === 'Package') {
+            const packagee = await prisma.package.findUnique({where: {id: parseInt(packageId)}})
+            if(!packagee) {
+                return res.send({ valid: false, error: 'Package not found.', error_description: 'Package does not exist' })
+            }
+            const packageBooking = await prisma.booking.create({
+                data: {
+                    storeId: parseInt(storeId),
+                    customerId: parseInt(customerId),
+                    bookingType: 'Package',
+                    packageId: parseInt(packageId),
+                    price: packagee.price,
+                    overs: packagee.overs
+                }
+            })
+            return res.send({ valid: true, booking: packageBooking })
+        }
+        if(bookingType === 'Custom') {
+            if(!price) {
+                return res.send({ status: 400, error: 'Invalid payload', error_description: 'price is required.' });
+            }
+            if(isNaN(Number(price))) {
+                return res.send({ status: 400, error: 'Invalid payload', error_description: 'price must be a integer.' });
+            }
+            if(!overs) {
+                return res.send({ status: 400, error: 'Invalid payload', error_description: 'overs is required.' });
+            }
+            if(isNaN(Number(overs))) {
+                return res.send({ status: 400, error: 'Invalid payload', error_description: 'overs must be a integer.' });
+            }
+            const customBooking = await prisma.booking.create({
+                data: {
+                    storeId: parseInt(storeId),
+                    customerId: parseInt(customerId),
+                    bookingType: 'Custom',
+                    price: parseInt(price),
+                    overs: parseInt(overs),
+                }
+            })
+            return res.send({ valid: true, booking: customBooking })
+        }
+        return res.send({ valid: false, message: "Failed to create booking" })
+    } catch (err) {
+        console.log(err);
+        return next(err);
+    }
+};
 
 const adminController = { 
         getStores,
@@ -389,6 +448,7 @@ const adminController = {
         deletePackage,
         getPackageById,
         getBookings,
-        getBookingsByStore
+        getBookingsByStore,
+        createBooking
     }
 export default adminController
