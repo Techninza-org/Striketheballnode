@@ -3,7 +3,6 @@ import helper from '../utils/helpers'
 import crypto from 'crypto'
 import { PrismaClient } from '@prisma/client'
 import jwt from 'jsonwebtoken'
-import { ExtendedRequest } from '../utils/middleware'
 import axios from 'axios'
 const prisma = new PrismaClient()
 
@@ -162,35 +161,14 @@ const dashboardDetails = async (req: Request, res: Response, next: NextFunction)
         const employees = await prisma.employee.findMany();
         const bookings = await prisma.booking.findMany();
         const packages = await prisma.package.findMany();
-        return res.status(200).send({ valid: true, stores: stores.length, employees: employees.length - 1, bookings: bookings.length, packages: packages.length });
+        const customers = await prisma.customer.findMany();
+        return res.status(200).send({ valid: true, stores: stores.length, employees: employees.length - 1, bookings: bookings.length, packages: packages.length, customers: customers.length });
     } catch (err) {
         return next(err);
     }
 }
 
-const createCustomer = async (req: Request, res: Response, next: NextFunction) => {
-    try{
-        const { name, email, phone } = req.body;
-        const isValidPayload = helper.isValidatePaylod(req.body, ['name', 'phone']);
-        if (!isValidPayload) {
-            return res.status(200).send({ status: 400, error: 'Invalid Payload', error_description: 'name, phone are required.' });
-        }
-        const existingCustomer = await prisma.customer.findFirst({ where: { phone } });
-        if(existingCustomer){
-            return res.status(200).send({ status: 400, error: 'Customer already exists', error_description: 'Customer with this phone number already exists.' });
-        }
-        const customer = await prisma.customer.create({
-            data: {
-                name,
-                email,
-                phone
-            }
-        });
-        return res.status(200).send({ status: 200, message: 'Ok', customer });
-    }catch(err){
-        return next(err);
-    }
-}
+
 
 // const SendOtp = async (req: Request, res: Response, _next: NextFunction) => {
 //     try {

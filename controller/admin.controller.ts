@@ -367,6 +367,27 @@ const getBookingsByStore = async (req: ExtendedRequest, res: Response, next: Nex
     }
 }
 
+const getBookingsByStatus = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { status } = req.params
+        if(status !== '0' && status !== '1') {
+            return res.send({ valid: false, error: 'Invalid status', error_description: 'Status must be PENDING, COMPLETED' })
+        }
+        if(status === '0') {
+            const bookings = await prisma.booking.findMany({where: {status: 'PENDING'}, orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
+            return res.send({ valid: true, bookings })
+        }else if(status === '1') {
+            const bookings = await prisma.booking.findMany({where: {status: 'COMPLETED'}, orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
+            return res.send({ valid: true, bookings })
+        }else{
+            const bookings = await prisma.booking.findMany({orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
+            return res.send({ valid: true, bookings })
+        }
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const createBooking = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { packageId, storeId, customerId, bookingType, overs, price } = req.body;
@@ -394,7 +415,8 @@ const createBooking = async (req: ExtendedRequest, res: Response, next: NextFunc
                     bookingType: 'Package',
                     packageId: parseInt(packageId),
                     price: packagee.price,
-                    overs: packagee.overs
+                    overs: packagee.overs,
+                    oversLeft: packagee.overs
                 }
             })
             return res.send({ valid: true, booking: packageBooking })
@@ -419,6 +441,7 @@ const createBooking = async (req: ExtendedRequest, res: Response, next: NextFunc
                     bookingType: 'Custom',
                     price: parseInt(price),
                     overs: parseInt(overs),
+                    oversLeft: parseInt(overs)
                 }
             })
             return res.send({ valid: true, booking: customBooking })
@@ -430,7 +453,78 @@ const createBooking = async (req: ExtendedRequest, res: Response, next: NextFunc
     }
 };
 
-const adminController = { 
+const updateBooking = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const { playedOvers } = req.body;
+        const isValidPayload = helper.isValidatePaylod(req.body, ['playedOvers']);
+        if (!isValidPayload) {
+            return res.send({ status: 400, error: 'Invalid payload', error_description: 'playedOvers is required.' });
+        }
+        const booking = await prisma.booking.update({
+            where: { id: parseInt(id) },
+            data: {
+                oversLeft: {
+                    decrement: parseInt(playedOvers)
+                },
+                status: {
+                    set: 'COMPLETED'
+                }
+            },
+        });
+        const customerId = booking.customerId;
+        const bookingLog = await prisma.bookingOvers.create({
+            data: {
+                bookingId: parseInt(id),
+                overs: parseInt(playedOvers),
+                employeeId: req.user.id,
+                customerId: customerId
+            }
+        })
+        const updatedBooking = await prisma.booking.findUnique({where: {id: parseInt(id)}});
+        if(updatedBooking?.oversLeft === 0) {
+            await prisma.booking.update({
+                where: { id: parseInt(id) },
+                data: {
+                    status: 'COMPLETED'
+                }
+            });
+        }
+        return res.send({ valid: true, booking });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+const getBookingById = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const booking = await prisma.booking.findUnique({
+            where: { id: parseInt(id) },
+            include: {store: true, customer: true, package: true}
+        });
+        if(!booking) {
+            return res.send({ valid: false, error: 'Booking not found.', error_description: 'Booking does not exist' });
+        }
+        return res.send({ valid: true, booking });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+const getBookingLogs = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const bookingLogs = await prisma.bookingOvers.findMany({
+            include: {booking: {include: {store: {select: {name: true}}, customer: {select: {name: true, email: true}}}}, employee: {select: {name: true, email: true}}},
+            orderBy: {createdAt: 'desc'}
+        });
+        return res.send({ valid: true, bookingLogs });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+const adminController = {
         getStores,
         createStore,
         getStoreById, 
@@ -449,6 +543,10 @@ const adminController = {
         getPackageById,
         getBookings,
         getBookingsByStore,
-        createBooking
+        createBooking,
+        getBookingsByStatus,
+        updateBooking,
+        getBookingById,
+        getBookingLogs
     }
 export default adminController

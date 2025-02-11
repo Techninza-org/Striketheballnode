@@ -36,6 +36,7 @@ model Employee {
   storeId    Int?
   store      Store?   @relation(fields: [storeId], references: [id])
   accessTo   Json?
+  bookingOvers   BookingOvers[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -49,6 +50,7 @@ model Store {
   phone         String?
   employees     Employee[]
   bookings      Booking[]
+  bookingOvers  BookingOvers[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 }
@@ -66,19 +68,21 @@ model Package {
 }
 
 model Booking {
-  id            Int           @id @default(autoincrement())
-  status        BookingStatus @default(PENDING)
-  storeId       Int
-  bookingType   BookingType
-  overs         Int?
-  price         Int?
-  store         Store         @relation(fields: [storeId], references: [id])
-  packageId     Int?
-  package       Package?       @relation(fields: [packageId], references: [id])
-  customerId    Int? 
-  customer      Customer?     @relation(fields: [customerId], references: [id])
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id           Int            @id @default(autoincrement())
+  status       BookingStatus  @default(PENDING)
+  storeId      Int
+  bookingType  BookingType
+  overs        Int?
+  oversLeft    Int?
+  price        Int?
+  store        Store          @relation(fields: [storeId], references: [id])
+  packageId    Int?
+  package      Package?       @relation(fields: [packageId], references: [id])
+  customerId   Int?
+  customer     Customer?      @relation(fields: [customerId], references: [id])
+  bookingOvers BookingOvers[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
 
 model Customer {
@@ -87,6 +91,24 @@ model Customer {
   phone     String?   @unique
   name      String
   bookings  Booking[]
+  bookingLog BookingOvers[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model BookingOvers {
+  id        Int       @id @default(autoincrement())
+  bookingId Int
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+  employee  Employee? @relation(fields: [employeeId], references: [id])
+  employeeId Int?
+  storeId   Int?
+  store     Store?    @relation(fields: [storeId], references: [id])
+  customerId Int?
+  customer Customer? @relation(fields: [customerId], references: [id])
+  overs     Int
+  date      DateTime?
+  slot      String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }

@@ -29,7 +29,7 @@ adminRouter.get('/employee/:id', middleware.AdminMiddleware, adminController.get
 //@ts-ignore
 adminRouter.post('/package', middleware.AdminMiddleware, adminController.createPackage)
 //@ts-ignore
-adminRouter.get('/package', middleware.AdminMiddleware, adminController.getAllPackages)
+adminRouter.get('/package', adminController.getAllPackages)
 //@ts-ignore
 adminRouter.get('/package/:id', middleware.AdminMiddleware, adminController.getPackageById)
 //@ts-ignore
@@ -41,6 +41,14 @@ adminRouter.get('/booking', middleware.AdminMiddleware, adminController.getBooki
 //@ts-ignore
 adminRouter.get('/booking/:storeId', middleware.AdminMiddleware, adminController.getBookingsByStore)
 //@ts-ignore
+adminRouter.get('/booking/status/:status', middleware.AdminMiddleware, adminController.getBookingsByStatus)
+//@ts-ignore
 adminRouter.post('/booking', middleware.AdminMiddleware, adminController.createBooking)
+//@ts-ignore
+adminRouter.put('/booking/:id', middleware.AdminMiddleware, adminController.updateBooking)
+//@ts-ignore
+adminRouter.get('/booking/details/:id', middleware.AdminMiddleware, adminController.getBookingById)
+//@ts-ignore
+adminRouter.get('/booking/logs/all', middleware.AdminMiddleware, adminController.getBookingLogs)
 
 export default adminRouter
