@@ -96,6 +96,109 @@ const createStore = async (req: ExtendedRequest, res: Response, next: NextFuncti
 
 ////////////////////////////////////////////////////////////////////////// EMPLOYEE CONTROLLER //////////////////////////////////////////////////////////////////////////////
 
+const createSubadmin = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try{
+        const {name, email, password, accessTo, phone} = req.body
+        const isValidPayload = helper.isValidatePaylod(req.body, ['email', 'password']);
+        if (!isValidPayload) {
+            return res.status(400).send({
+                status: 400,
+                error: 'Invalid payload',
+                error_description: 'email, password are required.',
+            });
+        }
+        const employeeExist = await prisma.employee.findFirst({
+            where: { OR: [{ email: email }, { phone: phone }] }
+        })
+
+        if(employeeExist) {
+            return res.status(400).send({
+                status: 400,
+                error: 'Invalid payload',
+                error_description: 'Employee email or phone already exist.',
+            });
+        }
+
+        const hash_password = crypto.pbkdf2Sync(password, SALT_ROUND, ITERATION, KEYLENGTH, DIGEST_ALGO).toString('hex');
+
+        const employee = await prisma.employee.create({
+            data: {
+                name,
+                email,
+                password: hash_password, 
+                accessTo: {
+                    'stores': true,
+                    'employees': true,
+                    'packages': true,
+                    'bookings': true,
+                    'customers': true,
+                    'logs': true
+                },
+                role: 'SUBADMIN',
+                phone,
+            },
+        });
+
+        const { password: _, ...employeeWithoutPassword } = employee;
+        return res.status(200).send({ valid: true, employee: employeeWithoutPassword });
+    }catch(err){
+        return next(err)
+    }
+}
+
+const updateSubadminAccess = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const { accessTo } = req.body;
+
+        const employee = await prisma.employee.update({
+            where: { id: parseInt(id) },
+            data: {
+                accessTo
+            },
+        });
+
+        const { password: _, ...employeeWithoutPassword } = employee;
+        return res.status(200).send({ valid: true, employee: employeeWithoutPassword });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+const getSubadmins = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const employees = await prisma.employee.findMany({
+            where: {
+                role: 'SUBADMIN'
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                accessTo: true,
+                phone: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+        return res.status(200).send({ valid: true, employees });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+const getRoutesToAccess = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const routes = [
+            'stores', 'employees', 'packages', 'bookings', 'customers', 'logs'
+        ]
+        return res.status(200).send({ valid: true, routes });
+    } catch (err) {
+        return next(err);
+    }
+}
+
 const createEmployee = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { name, email, password, storeId, accessTo, employeeId, phone } = req.body;
@@ -220,7 +323,7 @@ const getEmployees = async (req: ExtendedRequest, res: Response, next: NextFunct
         const employees = await prisma.employee.findMany({
             where: {
             role: {
-                not: 'ADMIN'
+                notIn: ['ADMIN', 'SUBADMIN']
             }
             },
             select: {
@@ -544,6 +647,10 @@ const adminController = {
         getBookingsByStatus,
         updateBooking,
         getBookingById,
-        getBookingLogs
+        getBookingLogs,
+        createSubadmin,
+        updateSubadminAccess,
+        getSubadmins,
+        getRoutesToAccess
     }
 export default adminController

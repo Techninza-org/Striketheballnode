@@ -38,6 +38,11 @@ app.post('/webhook', (req, res) => {
     res.status(200).send('Webhook received successfully!');
 });
 
+app.post('/ivrhook', (req, res) => {
+    console.log('Received IVR data:', req.body);  
+    res.status(200).send('IVR Webhook received successfully!');
+});
+
 app.get('/public/:filename', (req: Request, res: Response) => {
     const filename = req.params.filename;
     const filepath = path.resolve('./public/images/' + filename);

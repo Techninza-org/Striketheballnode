@@ -50,5 +50,13 @@ adminRouter.put('/booking/:id', middleware.AdminMiddleware, adminController.upda
 adminRouter.get('/booking/details/:id', middleware.AdminMiddleware, adminController.getBookingById)
 //@ts-ignore
 adminRouter.get('/booking/logs/all', middleware.AdminMiddleware, adminController.getBookingLogs)
+//@ts-ignore
+adminRouter.post('/subadmin', middleware.AdminMiddleware, adminController.createSubadmin)
+//@ts-ignore
+adminRouter.get('/subadmin', middleware.AdminMiddleware, adminController.getSubadmins)
+//@ts-ignore
+adminRouter.put('/subadmin/:id', middleware.AdminMiddleware, adminController.updateSubadminAccess)
+//@ts-ignore
+adminRouter.get('/access', middleware.AdminMiddleware, adminController.getRoutesToAccess)
 
 export default adminRouter
