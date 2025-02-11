@@ -466,9 +466,6 @@ const updateBooking = async (req: ExtendedRequest, res: Response, next: NextFunc
             data: {
                 oversLeft: {
                     decrement: parseInt(playedOvers)
-                },
-                status: {
-                    set: 'COMPLETED'
                 }
             },
         });
