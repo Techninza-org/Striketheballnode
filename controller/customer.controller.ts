@@ -59,10 +59,45 @@ const deleteCustomer = async (req: Request, res: Response, next: NextFunction) =
     }
 }
 
+const editCustomer = async (req: Request, res: Response, next: NextFunction) => {
+    try{
+        const { id } = req.params
+        const { email, name } = req.body
+        const customer = await prisma.customer.update({
+            where: {
+                id: parseInt(id)
+            },
+            data: {
+                email,
+                name
+            }
+        })
+        return res.status(200).send({valid: true, message: 'Customer updated successfully', customer})
+    }catch(err){
+        return res.status(400).send({valid: false, message: 'Customer not found'})
+    }
+}
+
+const getCustomerById = async (req: Request, res: Response, next: NextFunction) => {
+    try{
+        const { id } = req.params
+        const customer = await prisma.customer.findFirst({
+            where: {
+                id: parseInt(id)
+            }
+        })
+        return res.status(200).send({valid: true, message: 'Customer fetched successfully', customer})
+    }catch(err){
+        return res.status(400).send({valid: false, message: 'Customer not found'})
+    }
+}
+
 const customerController = {
     createCustomer,
     getCustomers,
-    deleteCustomer
+    deleteCustomer,
+    editCustomer,
+    getCustomerById
 }
 
 export default customerController

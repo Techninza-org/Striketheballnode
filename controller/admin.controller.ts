@@ -128,12 +128,15 @@ const createSubadmin = async (req: ExtendedRequest, res: Response, next: NextFun
                 password: hash_password, 
                 accessTo: {
                     'stores': true,
+                    'add-store': true,
                     'employees': true,
+                    'add-employee': true,
                     'packages': true,
+                    'add-package': true,
                     'bookings': true,
                     'customers': true,
                     'logs': true,
-                    'calls': true
+                    'calls': true,
                 },
                 role: 'SUBADMIN',
                 phone,
@@ -192,7 +195,7 @@ const getSubadmins = async (req: ExtendedRequest, res: Response, next: NextFunct
 const getRoutesToAccess = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const routes = [
-            'stores', 'employees', 'packages', 'bookings', 'customers', 'logs', 'calls'
+            'stores', 'add-store', 'employees', 'add-employee', 'packages', 'add-package', 'bookings', 'customers', 'logs', 'calls'
         ]
         return res.status(200).send({ valid: true, routes });
     } catch (err) {
@@ -457,6 +460,51 @@ const getBookings = async (req: ExtendedRequest, res: Response, next: NextFuncti
     }
 }
 
+const getBookingsByCustomerType = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { customerType } = req.params
+        if(customerType !== '0' && customerType !== '1' && customerType !== '2') {
+            return res.send({ valid: false, error: 'Invalid customer type', error_description: 'Customer type must be 0, 1 or 2' })
+        }
+        if(customerType === '0') {
+            const bookings = await prisma.booking.findMany({
+                where: {
+                    customerId: { not: null },
+                    customer: { customer_type: 'NORMAL' }
+                },
+                orderBy: { createdAt: 'desc' },
+                include: { store: true, customer: true, package: true }
+            });
+            return res.send({ valid: true, bookings })
+        }else if(customerType === '1'){
+            const bookings = await prisma.booking.findMany({
+                where: {
+                    customerId: { not: null },
+                    customer: { customer_type: 'IVR' }
+                },
+                orderBy: { createdAt: 'desc' },
+                include: { store: true, customer: true, package: true }
+            });
+            return res.send({ valid: true, bookings })
+        }else if(customerType === '2'){
+            const bookings = await prisma.booking.findMany({
+                where: {
+                    customerId: { not: null },
+                    customer: { customer_type: 'WA' }
+                },
+                orderBy: { createdAt: 'desc' },
+                include: { store: true, customer: true, package: true }
+            });
+            return res.send({ valid: true, bookings })
+        }else {
+            const bookings = await prisma.booking.findMany({orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
+            return res.send({ valid: true, bookings })
+        }
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const getBookingsByStore = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { storeId } = req.params
@@ -698,6 +746,7 @@ const adminController = {
         getRoutesToAccess,
         getCalls,
         addCallRemarks,
-        getCallById
+        getCallById,
+        getBookingsByCustomerType
     }
 export default adminController

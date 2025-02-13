@@ -55,7 +55,8 @@ app.post('/ivrhook', async (req, res) => {
             await prisma.customer.create({
                 data: {
                     name: `IVR-${caller_no}`,
-                    phone: caller_no.toString()
+                    phone: caller_no.toString(),
+                    customer_type: 'IVR'
                 }
             })
         }

@@ -24,6 +24,12 @@ enum BookingStatus {
   COMPLETED
 }
 
+enum CustomerType {
+  NORMAL
+  IVR
+  WA
+}
+
 model Employee {
   id           Int            @id @default(autoincrement())
   email        String         @unique
@@ -86,15 +92,16 @@ model Booking {
 }
 
 model Customer {
-  id         Int            @id @default(autoincrement())
-  email      String?        @unique
-  phone      String?        @unique
-  name       String
-  bookings   Booking[]
-  bookingLog BookingOvers[]
-  Call       Call[]
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id            Int            @id @default(autoincrement())
+  email         String?        @unique
+  phone         String?        @unique
+  name          String
+  customer_type CustomerType   @default(NORMAL)
+  bookings      Booking[]
+  bookingLog    BookingOvers[]
+  Call          Call[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model BookingOvers {

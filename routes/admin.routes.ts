@@ -41,6 +41,8 @@ adminRouter.get('/booking', middleware.AdminMiddleware, adminController.getBooki
 //@ts-ignore
 adminRouter.get('/booking/:storeId', middleware.AdminMiddleware, adminController.getBookingsByStore)
 //@ts-ignore
+adminRouter.get('/booking/type/customer/:customerType', middleware.AdminMiddleware, adminController.getBookingsByCustomerType)
+//@ts-ignore
 adminRouter.get('/booking/status/:status', middleware.AdminMiddleware, adminController.getBookingsByStatus)
 //@ts-ignore
 adminRouter.post('/booking', middleware.AdminMiddleware, adminController.createBooking)
