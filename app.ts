@@ -38,9 +38,51 @@ app.post('/webhook', (req, res) => {
     res.status(200).send('Webhook received successfully!');
 });
 
-app.post('/ivrhook', (req, res) => {
-    console.log('Received IVR data:', req.body);  
-    res.status(200).send('IVR Webhook received successfully!');
+app.post('/ivrhook', async (req, res) => {
+    try{
+        console.log('IVR Webhook Received:', req.body);
+
+        const {call_id, caller_no, called_no, call_start_time, call_end_time, duration} = req.body;
+
+        const existingCustomer = await prisma.customer.findFirst({
+            where: {
+                phone: caller_no.toString()
+            }
+        })
+
+        if(!existingCustomer){
+            console.log('New Customer');
+            await prisma.customer.create({
+                data: {
+                    name: `IVR-${caller_no}`,
+                    phone: caller_no.toString()
+                }
+            })
+        }
+
+        const customer = await prisma.customer.findFirst({
+            where: {
+                phone: caller_no.toString()
+            }
+        })
+        const customer_id = customer?.id;
+        await prisma.call.create({
+            data: {
+                call_id,
+                caller_no,
+                called_no,
+                call_start_time,
+                call_end_time,
+                duration,
+                customer_id
+            }
+        })
+        
+        return res.status(200).send('IVR Webhook received successfully!');
+    }catch(err){
+        console.log(err);
+        return res.status(500).send('Internal Server Error');
+    }
 });
 
 app.get('/public/:filename', (req: Request, res: Response) => {

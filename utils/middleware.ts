@@ -35,12 +35,16 @@ const AdminMiddleware = async (req: ExtendedRequest, res: Response, next: NextFu
     }
 
     const email: string = decryptedToken?.email
+    const role: string = decryptedToken?.role
     if (!email) {
         const err = new Error("Error: token doens't contain email")
         return next(err)
     }
+    if(!role){
+        return res.status(200).send({ status: 400, error: 'Role not found.', error_description: 'Role does not exist' })
+    }
     try {
-        const user = await prisma.employee.findFirst({where: {email, role: 'ADMIN'}})
+        const user = await prisma.employee.findFirst({where: {email, role: { in: ['ADMIN', 'SUBADMIN'] }}})
         if (!user) {
             return res.status(200).send({ status: 400, error: 'User not found.', error_description: 'Admin does not exist' })
         }

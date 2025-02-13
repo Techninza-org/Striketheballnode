@@ -2,9 +2,9 @@ import { type NextFunction, type Request, type Response } from 'express'
 import helper from '../utils/helpers'
 import crypto from 'crypto'
 import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
 import jwt from 'jsonwebtoken'
 import axios from 'axios'
-const prisma = new PrismaClient()
 
 const SALT_ROUND = process.env.SALT_ROUND!
 const ITERATION = 100
@@ -39,7 +39,18 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
             delete (userDetails as any).password
             
             if(userDetails.role === 'ADMIN'){
-                const token = jwt.sign({ email: userDetails.email }, process.env.JWT_SECRET!, {
+                const token = jwt.sign({ email: userDetails.email, role: userDetails.role }, process.env.JWT_SECRET!, {
+                    expiresIn: '7d',
+                })
+                return res.status(200).send({
+                    status: 200,
+                    message: 'Ok',
+                    user: { ...userDetails, token },
+                })
+            }
+
+            if(userDetails.role === 'SUBADMIN'){
+                const token = jwt.sign({ email: userDetails.email, role: userDetails.role, accessTo: userDetails.accessTo }, process.env.JWT_SECRET!, {
                     expiresIn: '7d',
                 })
                 return res.status(200).send({

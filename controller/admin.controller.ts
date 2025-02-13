@@ -132,7 +132,8 @@ const createSubadmin = async (req: ExtendedRequest, res: Response, next: NextFun
                     'packages': true,
                     'bookings': true,
                     'customers': true,
-                    'logs': true
+                    'logs': true,
+                    'calls': true
                 },
                 role: 'SUBADMIN',
                 phone,
@@ -191,7 +192,7 @@ const getSubadmins = async (req: ExtendedRequest, res: Response, next: NextFunct
 const getRoutesToAccess = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const routes = [
-            'stores', 'employees', 'packages', 'bookings', 'customers', 'logs'
+            'stores', 'employees', 'packages', 'bookings', 'customers', 'logs', 'calls'
         ]
         return res.status(200).send({ valid: true, routes });
     } catch (err) {
@@ -624,6 +625,49 @@ const getBookingLogs = async (req: ExtendedRequest, res: Response, next: NextFun
     }
 }
 
+const getCalls = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try{
+        const calls = await prisma.call.findMany({orderBy: {createdAt: 'desc'}, include: {customer: true, call_remarks: true}})
+        return res.status(200).send({valid: true, calls})
+    }catch(err){
+        return next(err)
+    }
+}
+
+const getCallById = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try{
+        const { id } = req.params
+        const call = await prisma.call.findUnique({where: {id: parseInt(id)}, include: {customer: true, call_remarks: true}})
+        return res.status(200).send({valid: true, call})
+    }catch(err){
+        return next(err)
+    }
+}
+
+const addCallRemarks = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try{
+        const { id } = req.params
+        const { remarks } = req.body
+        const isValidPayload = helper.isValidatePaylod(req.body, ['remarks']);
+        if (!isValidPayload) {
+            return res.status(400).send({
+                status: 400,
+                error: 'Invalid payload',
+                error_description: 'remarks is required.',
+            });
+        }
+        const call = await prisma.callRemarks.update({
+            where: { id: parseInt(id) },
+            data: {
+                remarks
+            },
+        });
+        return res.status(200).send({valid: true, call})
+    }catch(err){
+        return next(err)
+    }
+}
+
 const adminController = {
         getStores,
         createStore,
@@ -651,6 +695,9 @@ const adminController = {
         createSubadmin,
         updateSubadminAccess,
         getSubadmins,
-        getRoutesToAccess
+        getRoutesToAccess,
+        getCalls,
+        addCallRemarks,
+        getCallById
     }
 export default adminController

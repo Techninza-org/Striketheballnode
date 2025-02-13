@@ -58,5 +58,11 @@ adminRouter.get('/subadmin', middleware.AdminMiddleware, adminController.getSuba
 adminRouter.put('/subadmin/:id', middleware.AdminMiddleware, adminController.updateSubadminAccess)
 //@ts-ignore
 adminRouter.get('/access', middleware.AdminMiddleware, adminController.getRoutesToAccess)
+//@ts-ignore
+adminRouter.get('/calls', middleware.AdminMiddleware, adminController.getCalls)
+//@ts-ignore
+adminRouter.get('/calls/:id', middleware.AdminMiddleware, adminController.getCallById)
+//@ts-ignore
+adminRouter.post('/calls/:id', middleware.AdminMiddleware, adminController.addCallRemarks)
 
 export default adminRouter

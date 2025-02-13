@@ -1,10 +1,6 @@
 import { type NextFunction, type Request, type Response } from 'express'
 import helper from '../utils/helpers'
-import crypto from 'crypto'
 import { PrismaClient } from '@prisma/client'
-import jwt from 'jsonwebtoken'
-import { ExtendedRequest } from '../utils/middleware'
-import axios from 'axios'
 const prisma = new PrismaClient()
 
 
@@ -42,7 +38,7 @@ const createCustomer = async (req: Request, res: Response, next: NextFunction) =
 
 const getCustomers = async (req: Request, res: Response, next: NextFunction) => {
     try{
-        const customers = await prisma.customer.findMany()
+        const customers = await prisma.customer.findMany({orderBy: {createdAt: 'desc'}})
         return res.status(200).send({valid: true, message: 'Customers fetched successfully', customers})
     }catch(err){
         return next(err)

@@ -25,24 +25,24 @@ enum BookingStatus {
 }
 
 model Employee {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  employeeId Int?     @unique
-  phone      String?  @unique
-  name       String
-  password   String
-  isSubadmin Boolean  @default(false)
-  role       Role     @default(EMPLOYEE)
-  storeId    Int?
-  store      Store?   @relation(fields: [storeId], references: [id])
-  accessTo   Json?
-  bookingOvers   BookingOvers[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           Int            @id @default(autoincrement())
+  email        String         @unique
+  employeeId   Int?           @unique
+  phone        String?        @unique
+  name         String
+  password     String
+  isSubadmin   Boolean        @default(false)
+  role         Role           @default(EMPLOYEE)
+  storeId      Int?
+  store        Store?         @relation(fields: [storeId], references: [id])
+  accessTo     Json?
+  bookingOvers BookingOvers[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
 
 model Store {
-  id            Int        @id @default(autoincrement())
+  id            Int            @id @default(autoincrement())
   name          String?
   address       String?
   storeLocation String?
@@ -51,8 +51,8 @@ model Store {
   employees     Employee[]
   bookings      Booking[]
   bookingOvers  BookingOvers[]
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Package {
@@ -86,29 +86,54 @@ model Booking {
 }
 
 model Customer {
-  id        Int       @id @default(autoincrement())
-  email     String?   @unique
-  phone     String?   @unique
-  name      String
-  bookings  Booking[]
+  id         Int            @id @default(autoincrement())
+  email      String?        @unique
+  phone      String?        @unique
+  name       String
+  bookings   Booking[]
   bookingLog BookingOvers[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  Call       Call[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 }
 
 model BookingOvers {
-  id        Int       @id @default(autoincrement())
-  bookingId Int
-  booking   Booking   @relation(fields: [bookingId], references: [id])
-  employee  Employee? @relation(fields: [employeeId], references: [id])
+  id         Int       @id @default(autoincrement())
+  bookingId  Int
+  booking    Booking   @relation(fields: [bookingId], references: [id])
+  employee   Employee? @relation(fields: [employeeId], references: [id])
   employeeId Int?
-  storeId   Int?
-  store     Store?    @relation(fields: [storeId], references: [id])
+  storeId    Int?
+  store      Store?    @relation(fields: [storeId], references: [id])
   customerId Int?
-  customer Customer? @relation(fields: [customerId], references: [id])
-  overs     Int
-  date      DateTime?
-  slot      String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  overs      Int
+  date       DateTime?
+  slot       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model CallRemarks {
+  id        Int      @id @default(autoincrement())
+  call_id   Int
+  call      Call     @relation(fields: [call_id], references: [id])
+  remarks   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Call {
+  id              Int           @id @default(autoincrement())
+  call_id         String
+  caller_no       String
+  customer_id     Int?
+  customer        Customer?     @relation(fields: [customer_id], references: [id])
+  called_no       String
+  call_start_time String
+  call_end_time   String
+  duration        String
+  call_remarks    CallRemarks[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
