@@ -34,7 +34,7 @@ app.get('/ping', (_req, res) => {
 });
 
 app.post('/webhook', (req, res) => {
-    console.log('Received data:', req.body);  
+    console.log('Received data:', json.stringify(req.body));  
     res.status(200).send('Webhook received successfully!');
 });
 
