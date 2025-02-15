@@ -33,8 +33,135 @@ app.get('/ping', (_req, res) => {
     return res.status(200).send({ status: 200, message: 'pong' });
 });
 
-app.post('/webhook', (req, res) => {
-    console.log('Received data:', req.body);  
+app.post('/webhook', async (req, res) => {
+    try{
+    const {entry} = req.body;
+    const value = entry[0].changes[0].value;
+    const messages = value.messages[0];
+    const phone = value.contacts[0].wa_id;
+    const name = value.contacts[0].profile.name;
+    
+    const existingCustomer = await prisma.customer.findFirst({
+        where: {
+            phone: phone
+        }
+    })
+    
+    if(!existingCustomer){
+        await prisma.customer.create({
+            data: {
+                name: name,
+                phone: phone,
+                customer_type: 'WA'
+            }
+        })
+        
+    }
+    const customer = await prisma.customer.findFirst({
+        where: {
+            phone: phone
+        }
+    })
+    const customer_id = customer?.id;
+    
+    if(value.messages[0].text){
+        
+        await prisma.wAHook.create({
+            data: {
+                phone: phone,
+                cust_id: customer_id,
+                response: {
+                    text: value.messages[0].text
+                }
+            }
+        })
+    }
+    if(messages.type === 'interactive'){
+        if(messages.interactive.list_reply){
+            await prisma.wAHook.create({
+                data: {
+                    phone: phone,
+                    cust_id: customer_id,
+                    response: {
+                        selected: messages.interactive.list_reply.title,
+                    }
+                }
+            })
+        }
+        if(messages.interactive.nfm_reply){
+            await prisma.wAHook.create({
+                data: {
+                    phone: phone,
+                    cust_id: customer_id,
+                    response: {
+                        booking: true,
+                        details: messages.interactive.nfm_reply.response_json
+                    }
+                }
+            })
+           const resposneJson = JSON.parse(messages.interactive.nfm_reply.response_json);
+           
+           if(resposneJson.screen_0_choose_date_0){
+                const date = resposneJson.screen_0_choose_date_0;
+                const time = resposneJson.screen_0_time_slot_1.substring(2);
+                const packageHook = await prisma.$queryRaw`
+                    SELECT * FROM wAHook
+                    WHERE phone = ${phone}
+                    AND JSON_UNQUOTE(JSON_EXTRACT(response, '$.selected')) LIKE '%Overs%'
+                    LIMIT 1;
+                `;
+                const selected = JSON.parse((packageHook as any)[0].response).selected;
+                
+                if(selected.includes('INR')){
+                    let packageId = 0;
+                    if(selected === '5 Overs - 300 INR'){
+                        packageId = 8;
+                    }else if(selected === '10 Overs - 500 INR'){
+                        packageId = 9;
+                    }else if(selected === '20 Overs - 1000 INR'){
+                        packageId = 10;
+                    }else if(selected === '40 Overs - 1500 INR'){
+                        packageId = 11;
+                    }else{
+                        console.log('Invalid Package');
+                        return;
+                    }
+                    const packagee = await prisma.package.findUnique({where: {id: packageId}});
+                    if(packagee){
+                    await prisma.booking.create({
+                        data: {
+                            date: date,
+                            time: time,
+                            packageId: packageId,
+                            customerId: customer_id,
+                            storeId: 1,
+                            bookingType: 'Package',
+                            price: packagee.price,
+                            overs: packagee.overs,
+                            oversLeft: packagee.overs
+                        }
+                    })
+                }
+                }else{
+                    const selectedOvers = selected.split(' ')[0];
+                    await prisma.booking.create({
+                        data: {
+                            date: date,
+                            time: time,
+                            customerId: customer_id,
+                            storeId: 1,
+                            bookingType: 'Custom',
+                            overs: selectedOvers,
+                            oversLeft: selectedOvers
+                        }
+                    })
+                }
+           }
+        }
+    }
+    }catch(err){
+        console.log(err);
+    }
     res.status(200).send('Webhook received successfully!');
 });
 

@@ -78,6 +78,8 @@ model Booking {
   status       BookingStatus  @default(PENDING)
   storeId      Int
   bookingType  BookingType
+  date         String?
+  time         String?
   overs        Int?
   oversLeft    Int?
   price        Int?
@@ -94,12 +96,13 @@ model Booking {
 model Customer {
   id            Int            @id @default(autoincrement())
   email         String?        @unique
-  phone         String?        @unique
+  phone         String         @unique
   name          String
   customer_type CustomerType   @default(NORMAL)
   bookings      Booking[]
   bookingLog    BookingOvers[]
   Call          Call[]
+  WAHook        WAHook[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -143,4 +146,14 @@ model Call {
   call_remarks    CallRemarks[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+}
+
+model WAHook {
+  id        Int       @id @default(autoincrement())
+  phone     String
+  cust_id   Int
+  customer  Customer? @relation(fields: [cust_id], references: [id])
+  response  Json
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
