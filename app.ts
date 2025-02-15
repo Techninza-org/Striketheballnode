@@ -105,7 +105,7 @@ app.post('/webhook', async (req, res) => {
                 const date = resposneJson.screen_0_choose_date_0;
                 const time = resposneJson.screen_0_time_slot_1.substring(2);
                 const packageHook = await prisma.$queryRaw`
-                    SELECT * FROM wAHook
+                    SELECT * FROM WAHook
                     WHERE phone = ${phone}
                     AND JSON_UNQUOTE(JSON_EXTRACT(response, '$.selected')) LIKE '%Overs%'
                     LIMIT 1;
