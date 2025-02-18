@@ -34,6 +34,7 @@ app.get('/ping', (_req, res) => {
 });
 
 app.post('/webhook', async (req, res) => {
+    console.log('Received data:', JSON.stringify(req.body)); 
     try{
     const {entry} = req.body;
     const value = entry[0].changes[0].value;
@@ -167,7 +168,7 @@ app.post('/webhook', async (req, res) => {
 
 app.post('/ivrhook', async (req, res) => {
     try{
-        console.log('IVR Webhook Received:', req.body);
+        console.log('IVR Webhook Received:', JSON.stringify(req.body));
 
         const {call_id, caller_no, called_no, call_start_time, call_end_time, duration} = req.body;
 
