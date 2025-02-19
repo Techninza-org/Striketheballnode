@@ -111,6 +111,7 @@ app.post('/webhook', async (req, res) => {
                     SELECT * FROM WAHook
                     WHERE phone = ${phone}
                     AND JSON_UNQUOTE(JSON_EXTRACT(response, '$.selected')) LIKE '%Overs%'
+                    ORDER BY createdAt DESC 
                     LIMIT 1;
                 `;
                 console.log(packageHook, 'packageHook');
