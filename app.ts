@@ -107,14 +107,18 @@ app.post('/webhook', async (req, res) => {
                 const time = resposneJson.screen_0_Select_Time_Slot_2.substring(2);
                 console.log(store, date, time);
                 let storeId = 0;
-                
                 const packageHook = await prisma.$queryRaw`
                     SELECT * FROM WAHook
                     WHERE phone = ${phone}
                     AND JSON_UNQUOTE(JSON_EXTRACT(response, '$.selected')) LIKE '%Overs%'
                     LIMIT 1;
                 `;
-                const selected = JSON.parse((packageHook as any)[0].response).selected;
+                console.log(packageHook, 'packageHook');
+                
+                const hookJson = JSON.parse((packageHook as any)[0].response);
+                const selected = hookJson.selected;
+                console.log(selected, 'selected');
+                
                 if(store === 'StrikeTheBall - Palam Vihar'){
                     storeId = 1
                 }else if(store === 'StrikeTheBall - Sector 93'){
@@ -124,6 +128,8 @@ app.post('/webhook', async (req, res) => {
                 }else {
                     return;
                 }
+                console.log(storeId, 'storeID');
+                
                 
                 if(selected.includes('INR')){
                     let packageId = 0;
