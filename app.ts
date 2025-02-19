@@ -187,8 +187,8 @@ app.post('/webhook', async (req, res) => {
                                 customerId: customer_id,
                                 storeId: storeId,
                                 bookingType: 'Custom',
-                                overs: selectedOvers,
-                                oversLeft: selectedOvers
+                                overs: parseInt(selectedOvers),
+                                oversLeft: parseInt(selectedOvers)
                             }
                         })
                     }
