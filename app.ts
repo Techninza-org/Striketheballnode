@@ -132,7 +132,7 @@ app.post('/webhook', async (req, res) => {
                 console.log(storeId, 'storeID');
                 
                 
-                if(selected.includes('INR')){
+                if(selected.includes('INR') && selected.includes('Overs')){
                     let packageId = 0;
                     if(selected === '5 Overs - 300 INR'){
                         packageId = 1;
@@ -164,20 +164,7 @@ app.post('/webhook', async (req, res) => {
                         }
                     })
                     }
-                }else if(parseInt(selected) > 0){
-                    const overs = selected;
-                    await prisma.booking.create({
-                        data: {
-                            date: date,
-                            time: time,
-                            customerId: customer_id,
-                            storeId: storeId,
-                            bookingType: 'Custom',
-                            overs: overs,
-                            oversLeft: overs
-                        }
-                    })
-                }else{
+                }else if(selected.includes('Overs')){
                     const selectedOvers = selected.split(' ')[0];
                     console.log(selectedOvers, 'selectedOvers');
                     if(selectedOvers === '40+'){
@@ -205,6 +192,23 @@ app.post('/webhook', async (req, res) => {
                             }
                         })
                     }
+                }
+                else{
+                    const overs = parseInt(selected);
+                    if(isNaN(overs)){
+                        return;
+                    }
+                    await prisma.booking.create({
+                        data: {
+                            date: date,
+                            time: time,
+                            customerId: customer_id,
+                            storeId: storeId,
+                            bookingType: 'Custom',
+                            overs: overs,
+                            oversLeft: overs
+                        }
+                    })
                 }
            }
         }
