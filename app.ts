@@ -104,7 +104,8 @@ app.post('/webhook', async (req, res) => {
                 const rawStore = resposneJson.screen_0_Select_Store_0;
                 const store = rawStore.substring(rawStore.indexOf("_") + 1).replace(/_/g, " ");
                 const date = resposneJson.screen_0_Select_Date_1;
-                const time = resposneJson.screen_0_Select_Time_Slot_2.replace(/_/g, " ")[1];
+                const rawtime = resposneJson.screen_0_Select_Time_Slot_2.replace("_", " ");
+                const time = rawtime.split(' ')[1];
                 console.log(store, date, time);
                 let storeId = 0;
                 const packageHook = await prisma.$queryRaw`
