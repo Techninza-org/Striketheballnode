@@ -88,6 +88,18 @@ app.post('/webhook', async (req, res) => {
             })
         }
         if(messages.interactive.nfm_reply){
+           const resposneJson = JSON.parse(messages.interactive.nfm_reply.response_json);
+           if(resposneJson.screen_0_Label_0){
+            await prisma.wAHook.create({
+                data: {
+                    phone: phone,
+                    cust_id: customer_id,
+                    response: {
+                        selected: resposneJson.screen_0_Label_0
+                    }
+                }
+            })
+           }else{
             await prisma.wAHook.create({
                 data: {
                     phone: phone,
@@ -97,8 +109,8 @@ app.post('/webhook', async (req, res) => {
                         details: messages.interactive.nfm_reply.response_json
                     }
                 }
-            })
-           const resposneJson = JSON.parse(messages.interactive.nfm_reply.response_json);
+                })
+            }
            
            if(resposneJson.screen_0_Select_Store_0){
                 const rawStore = resposneJson.screen_0_Select_Store_0;
