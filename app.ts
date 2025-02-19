@@ -115,8 +115,8 @@ app.post('/webhook', async (req, res) => {
                 `;
                 console.log(packageHook, 'packageHook');
                 
-                const hookJson = JSON.parse((packageHook as any)[0].response);
-                const selected = hookJson.selected;
+                const response = (packageHook as any)[0].response;
+                const selected = response.selected;
                 console.log(selected, 'selected');
                 
                 if(store === 'StrikeTheBall - Palam Vihar'){
