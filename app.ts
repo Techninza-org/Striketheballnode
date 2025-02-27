@@ -244,7 +244,7 @@ app.post('/ivrhook', async (req, res) => {
     try{
         console.log('IVR Webhook Received:', JSON.stringify(req.body));
 
-        const {call_id, caller_no, called_no, call_start_time, call_end_time, duration} = req.body;
+        const {call_id, caller_no, called_no, call_start_time, call_end_time, duration, keypress} = req.body;
 
         const existingCustomer = await prisma.customer.findFirst({
             where: {
@@ -272,7 +272,7 @@ app.post('/ivrhook', async (req, res) => {
 
         const customer = await prisma.customer.findFirst({
             where: {
-                phone: caller_no.toString()
+                phone: '91'+ caller_no.toString()
             }
         })
         const customer_id = customer?.id;
@@ -288,7 +288,78 @@ app.post('/ivrhook', async (req, res) => {
                 customer_id
             }
         })
+
+        const presses = keypress.split('-DG-');
+        console.log(presses, 'presses');
+
+        let storeId = 0;
+        let overs = 0;
+        let date = '';
+        let time = '';
+
+
+        if(presses[0] === '1' || presses[0] === '2'){
+            if(presses[1] === '1') storeId = 1;
+            else if(presses[1] === '2') storeId = 2;
+            else if(presses[1] === '3') storeId = 3;
+            else return res.status(200).send('IVR Webhook received successfully!');
+        }
+
+        if(presses[2] === '1') overs = 10;
+        else if(presses[2] === '2') overs = 20;
+        else if(presses[2] === '3') overs = 30;
+        else if(presses[2] === '4') overs = 40;
+        else if(presses[2] === '5') overs = 0;
+        else return res.status(200).send('IVR Webhook received successfully!');
+
+        if(presses[3] === '1'){
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayDate = `${year}-${month}-${day}`;
+            date = todayDate;
+        }else if(presses[3] === '2'){
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const year = tomorrow.getFullYear();
+            const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const day = String(tomorrow.getDate()).padStart(2, '0');
+            const tomorrowDate = `${year}-${month}-${day}`;
+            date = tomorrowDate;
+        }else if(presses[3] === '3'){
+            const dayAfterTmrw = new Date();
+            dayAfterTmrw.setDate(dayAfterTmrw.getDate() + 2);
+            const year = dayAfterTmrw.getFullYear();
+            const month = String(dayAfterTmrw.getMonth() + 1).padStart(2, '0');
+            const day = String(dayAfterTmrw.getDate()).padStart(2, '0');
+            const dayAfterTmrwDate = `${year}-${month}-${day}`;
+            date = dayAfterTmrwDate;
+        }else {
+            return res.status(200).send('IVR Webhook received successfully!');
+        }
+
+        if(presses[4] === '1') time = 'Morning';
+        else if(presses[4] === '2') time = 'Afternoon';
+        else if(presses[4] === '3') time = 'Evening';
+        else return;
         
+        if(storeId === 0 || overs === 0 || date === '' || time === ''){
+            return res.status(200).send('IVR Webhook received successfully!');
+        }else{
+            await prisma.booking.create({
+                data: {
+                    date,
+                    time,
+                    customerId: customer_id,
+                    storeId,
+                    bookingType: 'Custom',
+                    overs,
+                    oversLeft: overs
+                }
+            })
+        }
+
         return res.status(200).send('IVR Webhook received successfully!');
     }catch(err){
         console.log(err);
