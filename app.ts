@@ -248,7 +248,7 @@ app.post('/ivrhook', async (req, res) => {
 
         const existingCustomer = await prisma.customer.findFirst({
             where: {
-                phone: caller_no.toString()
+                phone: '91'+ caller_no.toString()
             }
         })
 
@@ -256,8 +256,8 @@ app.post('/ivrhook', async (req, res) => {
             console.log('New Customer');
             const newCustomer = await prisma.customer.create({
                 data: {
-                    name: `IVR-${caller_no}`,
-                    phone: caller_no.toString(),
+                    name: `IVR-91${caller_no}`,
+                    phone: '91'+caller_no.toString(),
                     customer_type: 'IVR'
                 }
             })
