@@ -13,6 +13,7 @@ import authRouter from './routes/auth.routes';
 import adminRouter from './routes/admin.routes';
 import empRouter from './routes/emp.routes';
 import customerRouter from './routes/customer.routes';
+import leadRouter from './routes/lead.routes';
 
 const prisma = new PrismaClient();
 const app = express();
@@ -49,13 +50,20 @@ app.post('/webhook', async (req, res) => {
     })
     
     if(!existingCustomer){
-        await prisma.customer.create({
+        const newCustomer = await prisma.customer.create({
             data: {
                 name: name,
                 phone: phone,
                 customer_type: 'WA'
             }
         }) 
+        const newlead = await prisma.lead.create({
+            data: {
+                customerId: newCustomer.id,
+                stage: 'New',
+                source: 'WhatsApp',
+            }
+        })
     }
     const customer = await prisma.customer.findFirst({
         where: {
@@ -246,11 +254,18 @@ app.post('/ivrhook', async (req, res) => {
 
         if(!existingCustomer){
             console.log('New Customer');
-            await prisma.customer.create({
+            const newCustomer = await prisma.customer.create({
                 data: {
                     name: `IVR-${caller_no}`,
                     phone: caller_no.toString(),
                     customer_type: 'IVR'
+                }
+            })
+            const newlead = await prisma.lead.create({
+                data: {
+                    customerId: newCustomer.id,
+                    stage: 'New',
+                    source: 'IVR',
                 }
             })
         }
@@ -261,6 +276,7 @@ app.post('/ivrhook', async (req, res) => {
             }
         })
         const customer_id = customer?.id;
+        
         await prisma.call.create({
             data: {
                 call_id,
@@ -297,6 +313,7 @@ app.use('/auth', authRouter);
 app.use('/admin', adminRouter);
 app.use('/emp', empRouter);
 app.use('/customer', customerRouter);
+app.use('/lead', leadRouter);
 
 app.use(middleware.ErrorHandler);
 

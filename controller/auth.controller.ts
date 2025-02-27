@@ -173,87 +173,124 @@ const dashboardDetails = async (req: Request, res: Response, next: NextFunction)
         const bookings = await prisma.booking.findMany();
         const packages = await prisma.package.findMany();
         const customers = await prisma.customer.findMany();
-        return res.status(200).send({ valid: true, stores: stores.length, employees: employees.length - 1, bookings: bookings.length, packages: packages.length, customers: customers.length });
+        const todayFollowUps = await prisma.lead.count({where: {callbackDate: new Date()}})
+        const todayLeadsCount = await prisma.customer.count({
+            where: {
+            createdAt: {
+                gte: new Date(new Date().setHours(0o0, 0o0, 0o0)),
+                lte: new Date(new Date().setHours(23, 59, 59))
+            }
+            }
+        })
+
+        const monthLeads = await prisma.customer.count({
+            where: {
+                createdAt: {
+                    gte: new Date(new Date().setDate(new Date().getDate() - 30)),
+                    lte: new Date()
+                }
+            }
+        })
+
+        const sources = await prisma.source.findMany();
+
+        const sourcesWithLeads = await Promise.all(
+            sources.map(async (source) => {
+                const leadsCount = await prisma.lead.count({
+                    where: {
+                        source: source.name
+                    }
+                });
+                return {
+                    name: source.name,
+                    leadsCount
+                };
+            })
+        );
+
+        const stages = await prisma.stage.findMany();
+
+        const stagesWithLeads = await Promise.all(
+            stages.map(async (stage) => {
+                const leadsCount = await prisma.lead.count({
+                    where: {
+                        stage: stage.name
+                    }
+                });
+                return {
+                    name: stage.name,
+                    leadsCount
+                };
+            })
+        );
+        return res.status(200).send({ valid: true, stores: stores.length, employees: employees.length - 1, bookings: bookings.length, packages: packages.length, customers: customers.length, todayLeads: todayLeadsCount, monthLeads: monthLeads, sources: sourcesWithLeads, stages: stagesWithLeads, todayFollowUps: todayFollowUps });
     } catch (err) {
         return next(err);
     }
 }
 
-
-
-// const SendOtp = async (req: Request, res: Response, _next: NextFunction) => {
-//     try {
-//         if (!helper.isValidatePaylod(req.body, ['email'])) {
-//             return res.status(200).send({ status: 400, error: 'Invalid Payload', error_description: 'Email requried' })
-//         }
-//         const { email } = req.body
-//         const otp = Math.floor(10000 + Math.random() * 90000)
-//         // const otp = 1234
-//         const user = await prisma.user.findFirst({ where: { email } })
-//         console.log(user)
-
-//         if (!user) return res.status(200).send({ status: 404, error: 'Not found', error_description: 'user not found' })
-//         const previousSendOtp = await prisma.otp.findUnique({ where: { user_id: user.id } })
-//         const userid = user.id
-//         if (!previousSendOtp) {
-//             try {
-//                 const otpData = await prisma.otp.create({ data: { user_id: userid, otp: otp } })
-//                 helper.sendMail(email, 'EzioTravels Account Verification', `Your OTP is ${otp}`)
-//             } catch (err) {
-//                 return _next(err)
+// const leadsData = async (req: Request, res: Response, next: NextFunction) => {
+//     try{
+//         const todayLeadsCount = await prisma.customer.count({
+//             where: {
+//             createdAt: {
+//                 gte: new Date(new Date().setHours(0o0, 0o0, 0o0)),
+//                 lte: new Date(new Date().setHours(23, 59, 59))
 //             }
-//             return res.status(200).send({ status: 200, message: 'Ok' })
-//         } else {
-//             try {
-//                 const otpData = await prisma.otp.update({ where: { user_id: userid }, data: { otp: otp } })
-//                 helper.sendMail(email, 'EzioTravels Account Verification', `Your OTP is ${otp}`)
-//             } catch (err) {
-//                 return _next(err)
 //             }
-//             return res.status(200).send({ status: 200, message: 'Ok' })
-//         }
-//     } catch (err) {
-//         return _next(err)
-//     }
-// }
+//         })
 
+//         const monthLeads = await prisma.customer.count({
+//             where: {
+//                 createdAt: {
+//                     gte: new Date(new Date().setDate(new Date().getDate() - 30)),
+//                     lte: new Date()
+//                 }
+//             }
+//         })
 
-// const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//         const { email, otp } = req.body
-//         if (!helper.isValidatePaylod(req.body, ['email', 'otp'])) {
-//             return res
-//                 .status(200)
-//                 .send({ status: 400, error: 'Invalid payload', error_description: 'email, otp are required.' })
-//         }
-//         const user = await prisma.user.findFirst({ where: { email } })
-//         if (!user)
-//             return res
-//                 .status(200)
-//                 .send({ status: 400, error: 'user not found.', error_description: `No user with ${email}` })
-//         const otpData = await prisma.otp.findUnique({ where: { user_id: user.id } })
-//         if (!otpData) {
-//             return res.status(200).send({ error: 'Bad Request', error_description: 'OTP is not valid.' })
-//         }
-//         if (otpData?.otp === otp) {
-//             const otpExpirationTime = new Date(otpData.updated_at).setMinutes(new Date().getMinutes() + 5)
-//             if (otpExpirationTime < new Date().getTime()) {
-//                 return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'OTP is expired.' })
-//             }
-//             try {
-//                 const updatedUser = await prisma.user.update({ where: { id: user.id }, data: { is_verified: true } })
-//                 const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET!, {
-//                     expiresIn: '7d',
-//                 })
-//                 return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser, token })
-//             } catch (err) {
-//                 return next(err)
-//             }
-//         } else {
-//             return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'OTP is not valid.' })
-//         }
-//     } catch (err) {
-//         return next(err)
+//         const sources = await prisma.source.findMany();
+
+//         const sourcesWithLeads = await Promise.all(
+//             sources.map(async (source) => {
+//                 const leadsCount = await prisma.lead.count({
+//                     where: {
+//                         source: source.name
+//                     }
+//                 });
+//                 return {
+//                     name: source.name,
+//                     leadsCount
+//                 };
+//             })
+//         );
+
+//         const stages = await prisma.stage.findMany();
+
+//         const stagesWithLeads = await Promise.all(
+//             stages.map(async (stage) => {
+//                 const leadsCount = await prisma.lead.count({
+//                     where: {
+//                         stage: stage.name
+//                     }
+//                 });
+//                 return {
+//                     name: stage.name,
+//                     leadsCount
+//                 };
+//             })
+//         );
+        
+//         return res.status(200).send({
+//             valid: true,
+//             todayLeads: todayLeadsCount,
+//             monthLeads: monthLeads,
+//             sources: sourcesWithLeads,
+//             stages: stagesWithLeads,
+//         })
+    
+//     }catch(err){
+//         return next(err);
 //     }
 // }
 
