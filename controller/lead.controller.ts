@@ -219,6 +219,21 @@ const todayFollowUps = async (req: ExtendedRequest, res: Response, next: NextFun
     }
 }
 
+const getDataToDownload =  async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try{
+        const {stage} = req.params;
+        const leads = await prisma.lead.findMany({where: {stage: stage}})
+        const data = await prisma.customer.findMany({where: {id: {in: leads.map(lead => lead.customerId)}}, include: {bookings: true}})
+        const customers = data.map(customer => {
+            const {name, email, phone, bookings, createdAt} = customer
+            return {Name: name, Email: email, Phone: phone, Date: createdAt.toString().slice(4, 15), Total_Bookings: bookings.length}
+        })
+        return res.status(200).send({valid: true, customers})
+    }catch(err){
+        return next(err)
+    }
+}
+
 
 
 const leadController = {
@@ -232,7 +247,8 @@ const leadController = {
     getCustomerLeads,
     getCustomerByLeadStatus,
     getCustomerByLeadSource,
-    todayFollowUps
+    todayFollowUps,
+    getDataToDownload
 }
 
 export default leadController

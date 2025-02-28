@@ -25,5 +25,7 @@ leadRouter.get('/customer/leads/stage/:stage', leadController.getCustomerByLeadS
 leadRouter.get('/customer/leads/source/:source', leadController.getCustomerByLeadSource)
 //@ts-ignore
 leadRouter.get('/today-callbacks', leadController.todayFollowUps)
+//@ts-ignore
+leadRouter.get('/download/:stage', leadController.getDataToDownload)
 
 export default leadRouter
