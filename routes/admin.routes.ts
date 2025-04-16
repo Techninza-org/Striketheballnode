@@ -17,6 +17,8 @@ adminRouter.delete('/store/:id', middleware.AdminMiddleware, adminController.del
 //@ts-ignore
 adminRouter.get('/employee', middleware.AdminMiddleware, adminController.getEmployees)
 //@ts-ignore
+adminRouter.get('/employee/all', middleware.AdminMiddleware, adminController.getEmployeesAll)
+//@ts-ignore
 adminRouter.post('/employee', middleware.AdminMiddleware, adminController.createEmployee)
 //@ts-ignore
 adminRouter.put('/employee/:id', middleware.AdminMiddleware, adminController.updateEmployeeDetails)
@@ -39,6 +41,8 @@ adminRouter.delete('/package/:id', middleware.AdminMiddleware, adminController.d
 //@ts-ignore
 adminRouter.get('/booking', middleware.AdminMiddleware, adminController.getBookings)    
 //@ts-ignore
+adminRouter.get('/booking/customer/:id', middleware.AdminMiddleware, adminController.getBookingsByCustomerId)    
+//@ts-ignore
 adminRouter.get('/booking/:storeId', middleware.AdminMiddleware, adminController.getBookingsByStore)
 //@ts-ignore
 adminRouter.get('/booking/type/customer/:customerType', middleware.AdminMiddleware, adminController.getBookingsByCustomerType)
@@ -52,6 +56,10 @@ adminRouter.put('/booking/:id', middleware.AdminMiddleware, adminController.upda
 adminRouter.get('/booking/details/:id', middleware.AdminMiddleware, adminController.getBookingById)
 //@ts-ignore
 adminRouter.get('/booking/logs/all', middleware.AdminMiddleware, adminController.getBookingLogs)
+//@ts-ignore
+adminRouter.get('/booking/logs/store/:id', middleware.AdminMiddleware, adminController.getBookingLogsByStoreId)
+//@ts-ignore
+adminRouter.get('/booking/logs/customer/:id', middleware.AdminMiddleware, adminController.getBookingLogsByCustomerId)
 //@ts-ignore
 adminRouter.post('/subadmin', middleware.AdminMiddleware, adminController.createSubadmin)
 //@ts-ignore

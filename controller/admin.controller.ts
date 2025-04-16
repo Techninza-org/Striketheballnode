@@ -349,6 +349,28 @@ const getEmployees = async (req: ExtendedRequest, res: Response, next: NextFunct
     }
 }
 
+const getEmployeesAll = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const employees = await prisma.employee.findMany({
+            select: {
+            id: true,
+            name: true,
+            email: true,
+            storeId: true,
+            accessTo: true,
+            employeeId: true,
+            phone: true
+            },
+            orderBy: {
+            createdAt: 'desc'
+            }
+        });
+        return res.status(200).send({ valid: true, employees });
+    } catch (err) {
+        return next(err);
+    }
+}
+
 const getEmployeeById = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
@@ -454,6 +476,20 @@ const getPackageById = async (req: ExtendedRequest, res: Response, next: NextFun
 const getBookings = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const bookings = await prisma.booking.findMany({orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
+        return res.send({ valid: true, bookings })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const getBookingsByCustomerId = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params
+        const customer = await prisma.customer.findUnique({where: {id: parseInt(id)}})
+        if(!customer) {
+            return res.send({ valid: false, error: 'Customer not found.', error_description: 'Customer does not exist' })
+        }
+        const bookings = await prisma.booking.findMany({where: {customerId: parseInt(id)}, orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
         return res.send({ valid: true, bookings })
     } catch (err) {
         return next(err)
@@ -673,6 +709,34 @@ const getBookingLogs = async (req: ExtendedRequest, res: Response, next: NextFun
     }
 }
 
+const getBookingLogsByStoreId = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const bookingLogs = await prisma.bookingOvers.findMany({
+            where: {booking: {storeId: parseInt(id)}},
+            include: {booking: {include: {store: {select: {name: true}}, customer: {select: {name: true, email: true}}}}, employee: {select: {name: true, email: true}}},
+            orderBy: {createdAt: 'desc'}
+        });
+        return res.send({ valid: true, bookingLogs });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+const getBookingLogsByCustomerId = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const bookingLogs = await prisma.bookingOvers.findMany({
+            where: {customerId: parseInt(id)},
+            include: {booking: {include: {store: {select: {name: true}}, customer: {select: {name: true, email: true}}}}, employee: {select: {name: true, email: true}}},
+            orderBy: {createdAt: 'desc'}
+        });
+        return res.send({ valid: true, bookingLogs });
+    } catch (err) {
+        return next(err);
+    }
+}
+
 const getCalls = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try{
         const calls = await prisma.call.findMany({orderBy: {createdAt: 'desc'}, include: {customer: true, call_remarks: true}})
@@ -753,6 +817,8 @@ const getEachStoreRevenue = async (req: ExtendedRequest, res: Response, next: Ne
 
 const adminController = {
         getStores,
+        getBookingLogsByStoreId,
+        getBookingLogsByCustomerId,
         getEachStoreRevenue,
         createStore,
         getStoreById, 
@@ -783,6 +849,8 @@ const adminController = {
         getCalls,
         addCallRemarks,
         getCallById,
-        getBookingsByCustomerType
+        getBookingsByCustomerType,
+        getBookingsByCustomerId,
+        getEmployeesAll
     }
 export default adminController
