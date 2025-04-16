@@ -168,67 +168,175 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
 
 const dashboardDetails = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const stores = await prisma.store.findMany();
-        const employees = await prisma.employee.findMany();
-        const bookings = await prisma.booking.findMany();
-        const packages = await prisma.package.findMany();
-        const customers = await prisma.customer.findMany();
-        const todayFollowUps = await prisma.lead.count({where: {callbackDate: new Date()}})
-        const todayLeadsCount = await prisma.customer.count({
-            where: {
-            createdAt: {
-                gte: new Date(new Date().setHours(0o0, 0o0, 0o0)),
-                lte: new Date(new Date().setHours(23, 59, 59))
+      const { date } = req.query;
+      const filterDate = date ? new Date(date as string) : null;
+  
+      const monthStartDate = filterDate
+        ? new Date(filterDate.getFullYear(), filterDate.getMonth(), 1)
+        : null;
+  
+      const monthEndDate = filterDate
+        ? new Date(filterDate.getFullYear(), filterDate.getMonth() + 1, 0, 23, 59, 59)
+        : null;
+  
+      const stores = await prisma.store.findMany();
+      const employees = await prisma.employee.findMany();
+  
+      const bookings = await prisma.booking.findMany({
+        where: filterDate
+          ? {
+              createdAt: {
+                gte: monthStartDate!,
+                lte: monthEndDate!,
+              },
             }
+          : undefined,
+      });
+  
+      const packages = await prisma.package.findMany();
+  
+      const customers = await prisma.customer.findMany({
+        where: filterDate
+          ? {
+              createdAt: {
+                gte: monthStartDate!,
+                lte: monthEndDate!,
+              },
             }
-        })
-
-        const monthLeads = await prisma.customer.count({
+          : undefined,
+      });
+  
+      const todayFollowUps = await prisma.lead.count({
+        where: {
+          callbackDate: new Date(),
+        },
+      });
+  
+      const todayLeadsCount = await prisma.customer.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().setHours(0, 0, 0)),
+            lte: new Date(new Date().setHours(23, 59, 59)),
+          },
+        },
+      });
+  
+      const monthLeads = await prisma.customer.count({
+        where: filterDate
+          ? {
+              createdAt: {
+                gte: monthStartDate!,
+                lte: monthEndDate!,
+              },
+            }
+          : {
+              createdAt: {
+                gte: new Date(new Date().setDate(new Date().getDate() - 30)),
+                lte: new Date(),
+              },
+            },
+      });
+  
+      const sources = await prisma.source.findMany();
+  
+      const sourcesWithLeads = await Promise.all(
+        sources.map(async (source) => {
+          const leadsCount = await prisma.lead.count({
             where: {
+              source: source.name,
+              ...(filterDate && {
                 createdAt: {
-                    gte: new Date(new Date().setDate(new Date().getDate() - 30)),
-                    lte: new Date()
-                }
-            }
+                  gte: monthStartDate!,
+                  lte: monthEndDate!,
+                },
+              }),
+            },
+          });
+          return {
+            name: source.name,
+            leadsCount,
+          };
         })
-
-        const sources = await prisma.source.findMany();
-
-        const sourcesWithLeads = await Promise.all(
-            sources.map(async (source) => {
-                const leadsCount = await prisma.lead.count({
-                    where: {
-                        source: source.name
-                    }
-                });
-                return {
-                    name: source.name,
-                    leadsCount
-                };
-            })
-        );
-
-        const stages = await prisma.stage.findMany();
-
-        const stagesWithLeads = await Promise.all(
-            stages.map(async (stage) => {
-                const leadsCount = await prisma.lead.count({
-                    where: {
-                        stage: stage.name
-                    }
-                });
-                return {
-                    name: stage.name,
-                    leadsCount
-                };
-            })
-        );
-        return res.status(200).send({ valid: true, stores: stores.length, employees: employees.length - 1, bookings: bookings.length, packages: packages.length, customers: customers.length, todayLeads: todayLeadsCount, monthLeads: monthLeads, sources: sourcesWithLeads, stages: stagesWithLeads, todayFollowUps: todayFollowUps });
+      );
+  
+      const stages = await prisma.stage.findMany();
+  
+      const stagesWithLeads = await Promise.all(
+        stages.map(async (stage) => {
+          const leadsCount = await prisma.lead.count({
+            where: {
+              stage: stage.name,
+              ...(filterDate && {
+                createdAt: {
+                  gte: monthStartDate!,
+                  lte: monthEndDate!,
+                },
+              }),
+            },
+          });
+          return {
+            name: stage.name,
+            leadsCount,
+          };
+        })
+      );
+  
+      let storeRevenue = [];
+      for (let i = 0; i < stores.length; i++) {
+        const storeId = stores[i].id;
+        const storeName = stores[i].name;
+  
+        const bookings = await prisma.booking.findMany({
+          where: {
+            storeId: storeId,
+            ...(filterDate && {
+              createdAt: {
+                gte: monthStartDate!,
+                lte: monthEndDate!,
+              },
+            }),
+          },
+          orderBy: { createdAt: 'desc' },
+          include: { store: true, customer: true, package: true },
+        });
+  
+        let totalRevenue = 0;
+        let monthRevenue = 0;
+  
+        bookings.forEach((booking) => {
+          if (booking.price !== null) {
+            totalRevenue += booking.price;
+            monthRevenue += booking.price;
+          }
+        });
+  
+        storeRevenue.push({
+          storeId,
+          storeName,
+          total: totalRevenue,
+          month: monthRevenue,
+        });
+      }
+  
+      return res.status(200).send({
+        valid: true,
+        stores: stores.length,
+        employees: employees.length - 1,
+        bookings: bookings.length,
+        packages: packages.length,
+        customers: customers.length,
+        todayLeads: todayLeadsCount,
+        monthLeads: monthLeads,
+        sources: sourcesWithLeads,
+        stages: stagesWithLeads,
+        todayFollowUps: todayFollowUps,
+        revenue: storeRevenue,
+      });
     } catch (err) {
-        return next(err);
+      return next(err);
     }
-}
-
+  };
+  
 // const leadsData = async (req: Request, res: Response, next: NextFunction) => {
 //     try{
 //         const todayLeadsCount = await prisma.customer.count({

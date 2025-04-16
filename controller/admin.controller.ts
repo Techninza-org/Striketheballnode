@@ -716,8 +716,44 @@ const addCallRemarks = async (req: ExtendedRequest, res: Response, next: NextFun
     }
 }
 
+const getEachStoreRevenue = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const stores = await prisma.store.findMany()
+        let storeRevenue = []
+        for(let i = 0; i < stores.length; i++) {
+            const storeId = stores[i].id
+            const bookings = await prisma.booking.findMany({where: {storeId: storeId}, orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
+            let totalRevenue = 0;
+            bookings.forEach((booking) => {
+                if (booking.price !== null) {
+                    totalRevenue += booking.price
+                }
+            })
+            let currentMonthRevenue = 0;
+            const currentDate = new Date();
+            const currentMonth = currentDate.getMonth() + 1;
+            const currentYear = currentDate.getFullYear();
+            bookings.forEach((booking) => {
+                const bookingDate = new Date(booking.createdAt);
+                const bookingMonth = bookingDate.getMonth() + 1;
+                const bookingYear = bookingDate.getFullYear();
+                if (bookingMonth === currentMonth && bookingYear === currentYear) {
+                    if(booking.price !== null){
+                        currentMonthRevenue += booking.price
+                    }
+                }
+            })
+            storeRevenue.push({storeId, total: totalRevenue, month: currentMonthRevenue})
+        }
+        return res.send({ valid: true, storeRevenue })
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const adminController = {
         getStores,
+        getEachStoreRevenue,
         createStore,
         getStoreById, 
         updateStore, 
