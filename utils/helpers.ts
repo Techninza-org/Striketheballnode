@@ -1,5 +1,10 @@
 // import nodemailer from 'nodemailer'
 
+import multer from 'multer';
+
+const storage = multer.memoryStorage();
+export const upload = multer({ storage });
+
 const isValidatePaylod = (body: any, fields: string[]): boolean => {
     if (!body) {
         return false

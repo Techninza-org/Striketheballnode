@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import adminController from '../controller/admin.controller'
 import middleware from '../utils/middleware'
+import { upload } from '../utils/helpers'
 
 const adminRouter = Router()
 
@@ -51,6 +52,8 @@ adminRouter.get('/booking/status/:status', middleware.AdminMiddleware, adminCont
 //@ts-ignore
 adminRouter.post('/booking', middleware.AdminMiddleware, adminController.createBooking)
 //@ts-ignore
+adminRouter.post('/direct/booking', middleware.AdminMiddleware, adminController.createDirectBooking)
+//@ts-ignore
 adminRouter.put('/booking/:id', middleware.AdminMiddleware, adminController.updateBooking)
 //@ts-ignore
 adminRouter.get('/booking/details/:id', middleware.AdminMiddleware, adminController.getBookingById)
@@ -74,5 +77,11 @@ adminRouter.get('/calls', middleware.AdminMiddleware, adminController.getCalls)
 adminRouter.get('/calls/:id', middleware.AdminMiddleware, adminController.getCallById)
 //@ts-ignore
 adminRouter.post('/calls/:id', middleware.AdminMiddleware, adminController.addCallRemarks)
+//@ts-ignore
+adminRouter.post('/password/employee/:id', middleware.AdminMiddleware, adminController.updateEmpPassword)
+//@ts-ignore
+adminRouter.get('/bookings/today', middleware.AdminMiddleware, adminController.getTodayBookings)
+//@ts-ignore
+adminRouter.post('/upload-sheet', upload.single('file'), middleware.AdminMiddleware, adminController.uploadSheet)
 
 export default adminRouter

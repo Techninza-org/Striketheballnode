@@ -8,6 +8,7 @@ const SALT_ROUND = process.env.SALT_ROUND!
 const ITERATION = 100
 const KEYLENGTH = 10
 const DIGEST_ALGO = 'sha512'
+import Papa from 'papaparse';
 
 ////////////////////////////////////////////////////////////////////////// STORE CONTROLLER //////////////////////////////////////////////////////////////////////////////
 
@@ -641,6 +642,80 @@ const createBooking = async (req: ExtendedRequest, res: Response, next: NextFunc
     }
 };
 
+const createDirectBooking = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { packageId, storeId, customerName, customerPhone, customerEmail, bookingType, overs, price } = req.body;
+        const isValidPayload = helper.isValidatePaylod(req.body, ['storeId', 'bookingType', 'customerName', 'customerPhone']);
+        if(!isValidPayload) {
+            return res.send({ status: 400, error: 'Invalid payload', error_description: 'storeId, bookingType, customerName, customerPhone are required.' });
+        }
+        const existingCustomer = await prisma.customer.findUnique({where: {phone: customerPhone}})
+        if(existingCustomer) {
+            return res.send({ valid: false, error: 'Customer already found.', error_description: 'Customer with phone already exist' })
+        }
+        const customer = await prisma.customer.create({
+            data: {
+                name: customerName,
+                phone: customerPhone,
+                email: customerEmail,
+                customer_type: 'NORMAL'
+            }
+        })
+        const customerId = customer.id.toString();
+        const store = await prisma.store.findUnique({where: {id: parseInt(storeId)}})
+        if(!store) {
+            return res.send({ valid: false, error: 'Store not found.', error_description: 'Store does not exist' })
+        }
+        if(bookingType === 'Package') {
+            const packagee = await prisma.package.findUnique({where: {id: parseInt(packageId)}})
+            if(!packagee) {
+                return res.send({ valid: false, error: 'Package not found.', error_description: 'Package does not exist' })
+            }
+            const packageBooking = await prisma.booking.create({
+                data: {
+                    storeId: parseInt(storeId),
+                    customerId: parseInt(customerId),
+                    bookingType: 'Package',
+                    packageId: parseInt(packageId),
+                    price: packagee.price,
+                    overs: packagee.overs,
+                    oversLeft: packagee.overs
+                }
+            })
+            return res.send({ valid: true, booking: packageBooking })
+        }
+        if(bookingType === 'Custom') {
+            if(!price) {
+                return res.send({ status: 400, error: 'Invalid payload', error_description: 'price is required.' });
+            }
+            if(isNaN(Number(price))) {
+                return res.send({ status: 400, error: 'Invalid payload', error_description: 'price must be a integer.' });
+            }
+            if(!overs) {
+                return res.send({ status: 400, error: 'Invalid payload', error_description: 'overs is required.' });
+            }
+            if(isNaN(Number(overs))) {
+                return res.send({ status: 400, error: 'Invalid payload', error_description: 'overs must be a integer.' });
+            }
+            const customBooking = await prisma.booking.create({
+                data: {
+                    storeId: parseInt(storeId),
+                    customerId: parseInt(customerId),
+                    bookingType: 'Custom',
+                    price: parseInt(price),
+                    overs: parseInt(overs),
+                    oversLeft: parseInt(overs)
+                }
+            })
+            return res.send({ valid: true, booking: customBooking })
+        }
+        return res.send({ valid: false, message: "Failed to create booking" })
+    } catch (err) {
+        console.log(err);
+        return next(err);
+    }
+};
+
 const updateBooking = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
@@ -815,7 +890,124 @@ const getEachStoreRevenue = async (req: ExtendedRequest, res: Response, next: Ne
     }
 }
 
+const getTodayBookings = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).toISOString();
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString();
+
+        const bookings = await prisma.booking.findMany({
+            where: {
+                date: {
+                    gte: startOfDay,
+                    lte: endOfDay,
+                },
+            },
+            include: { store: true, customer: true, package: true },
+        });
+
+        return res.send({ valid: true, bookings });
+    } catch (err) {
+        return next(err);
+    }
+};
+
+
+const updateEmpPassword = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params
+        const { password } = req.body
+        const isValidPayload = helper.isValidatePaylod(req.body, ['password']);
+        if (!isValidPayload) {
+            return res.status(400).send({
+                status: 400,
+                error: 'Invalid payload',
+                error_description: 'password is required.',
+            });
+        }
+        const hash_password = crypto.pbkdf2Sync(password, SALT_ROUND, ITERATION, KEYLENGTH, DIGEST_ALGO).toString('hex');
+
+        const employee = await prisma.employee.update({
+            where: { id: parseInt(id) },
+            data: {
+                password: hash_password,
+            },
+        });
+
+        const { password: _, ...employeeWithoutPassword } = employee;
+        return res.status(200).send({ valid: true, employee: employeeWithoutPassword });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+const uploadSheet = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).send({
+                status: 400,
+                error: 'Invalid payload',
+                error_description: 'File is required.'
+            });
+        }
+
+        const csvText = file.buffer.toString('utf-8'); 
+
+        let customers: any[] = [];
+
+        Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async (results: any) => {
+                const data = results.data as { name: string; phone: string }[];
+                data.forEach(row => {
+                    
+                    if (row.name && row.phone) {
+                        customers.push({
+                            name: row.name,
+                            phone: row.phone,
+                            customer_type: 'NORMAL'
+                        });
+                    }
+                });
+
+                const resp = await handleCreateCustomers(customers);
+
+                return res.status(200).send({ valid: true, data: resp, message: 'Customers created successfully' });
+            },
+            error: (err: any) => {
+                console.error('Error parsing CSV:', err);
+                return res.status(500).send({ valid: false, error: 'Error parsing CSV file' });
+            }
+        });
+
+    } catch (err) {
+        return next(err);
+    }
+};
+
+async function handleCreateCustomers(customers: any[]) {
+    const existingCustomers = await prisma.customer.findMany({
+        where: {
+            phone: {
+                in: customers.map((customer) => customer.phone)
+            }
+        }
+    })
+    const newCustomers = customers.filter((customer) => {
+        return !existingCustomers.some((existingCustomer) => existingCustomer.phone === customer.phone)
+    })
+    const createdCustomers = await prisma.customer.createMany({
+        data: newCustomers
+    })
+    return { createdCustomers, existingCustomers }
+
+}
+
 const adminController = {
+        uploadSheet,
         getStores,
         getBookingLogsByStoreId,
         getBookingLogsByCustomerId,
@@ -851,6 +1043,9 @@ const adminController = {
         getCallById,
         getBookingsByCustomerType,
         getBookingsByCustomerId,
-        getEmployeesAll
+        getEmployeesAll,
+        updateEmpPassword,
+        createDirectBooking,
+        getTodayBookings
     }
 export default adminController

@@ -23,8 +23,6 @@ app.use(express.json());
 app.use(morgan('tiny'));
 app.use(cors());
 
-const storage = multer.memoryStorage();
-export const upload = multer({ storage: storage });
 
 app.get('/', (_req, res) => {
     return res.status(200).send({ message: 'Welcome to Strike The Ball' });
