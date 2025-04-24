@@ -428,6 +428,24 @@ app.post('/enquiry', async (req, res) => {
     }
 })
 
+app.get('/stores', async (req, res) => {
+        try {
+            const stores = await prisma.store.findMany()
+            return res.send({ valid: true, stores })
+        } catch (err) {
+            return res.send({ valid: false, error: 'Internal Server Error', error_description: 'Something went wrong' })
+        }
+})
+
+app.get('/packages', async (req, res) => {
+    try {
+        const packages = await prisma.package.findMany()
+        return res.send({ valid: true, packages })
+    } catch (err) {
+        return res.send({ valid: false, error: 'Internal Server Error', error_description: 'Something went wrong' })
+    }
+})
+
 app.get('/public/:filename', (req: Request, res: Response) => {
     const filename = req.params.filename;
     const filepath = path.resolve('./public/images/' + filename);
