@@ -14,6 +14,7 @@ import adminRouter from './routes/admin.routes';
 import empRouter from './routes/emp.routes';
 import customerRouter from './routes/customer.routes';
 import leadRouter from './routes/lead.routes';
+import helper from './utils/helpers';
 
 const prisma = new PrismaClient();
 const app = express();
@@ -364,6 +365,68 @@ app.post('/ivrhook', async (req, res) => {
         return res.status(500).send('Internal Server Error');
     }
 });
+
+app.post('/enquiry', async (req, res) => {
+    try{
+        const {name, phone, packageId, storeId, date, time} = req.body;
+        const isValidPayload = helper.isValidatePaylod(req.body, ['storeId', 'name', 'phone', 'packageId', 'date', 'time']);
+        if(!isValidPayload) {
+            return res.send({ status: 400, error: 'Invalid payload', error_description: 'name, phone, packageId, date, time and storeId are required.' });
+        }
+        const store = await prisma.store.findUnique({where: {id: parseInt(storeId)}})
+        if(!store) {
+            return res.send({ valid: false, error: 'Store not found.', error_description: 'Store does not exist' })
+        }
+       const packageExist = await prisma.package.findUnique({where: {id: parseInt(packageId)}})
+        if(!packageExist) {
+            return res.send({ valid: false, error: 'Package not found.', error_description: 'Package does not exist' })
+        }
+        const existingCustomer = await prisma.customer.findFirst({
+            where: {
+                phone: phone
+            }
+        })
+        if(!existingCustomer){
+            const newCustomer = await prisma.customer.create({
+                data: {
+                    name: name,
+                    phone: phone,
+                    customer_type: 'ENQUIRY'
+                }
+            })
+            const newlead = await prisma.lead.create({
+                data: {
+                    customerId: newCustomer.id,
+                    stage: 'New',
+                    source: 'ENQUIRY',
+                }
+            })
+        }
+        const customer = await prisma.customer.findFirst({
+            where: {
+                phone: phone
+            }
+        })
+        const customer_id = customer?.id;
+        const booking = await prisma.booking.create({
+            data: {
+                date,
+                time,
+                customerId: customer_id,
+                storeId,
+                price: packageExist?.price,
+                bookingType: 'Enquiry',
+                packageId: packageId,
+                overs: packageExist?.overs,
+                oversLeft: packageExist?.overs,
+            }
+        })
+        return res.status(200).send({valid: true, message: 'Booking received successfully!', booking});
+    }catch(err){
+        console.log(err);
+        return res.status(500).send('Internal Server Error');
+    }
+})
 
 app.get('/public/:filename', (req: Request, res: Response) => {
     const filename = req.params.filename;

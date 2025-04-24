@@ -16,6 +16,7 @@ enum Role {
 enum BookingType {
   Package
   Custom
+  Enquiry
 }
 
 enum BookingStatus {
@@ -28,6 +29,7 @@ enum CustomerType {
   NORMAL
   IVR
   WA
+  ENQUIRY
 }
 
 model Employee {
