@@ -500,8 +500,8 @@ const getBookingsByCustomerId = async (req: ExtendedRequest, res: Response, next
 const getBookingsByCustomerType = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { customerType } = req.params
-        if(customerType !== '0' && customerType !== '1' && customerType !== '2') {
-            return res.send({ valid: false, error: 'Invalid customer type', error_description: 'Customer type must be 0, 1 or 2' })
+        if(customerType !== '0' && customerType !== '1' && customerType !== '2' && customerType !== '3') {
+            return res.send({ valid: false, error: 'Invalid customer type', error_description: 'Customer type must be 0, 1, 2, 3' })
         }
         if(customerType === '0') {
             const bookings = await prisma.booking.findMany({
@@ -528,6 +528,16 @@ const getBookingsByCustomerType = async (req: ExtendedRequest, res: Response, ne
                 where: {
                     customerId: { not: null },
                     customer: { customer_type: 'WA' }
+                },
+                orderBy: { createdAt: 'desc' },
+                include: { store: true, customer: true, package: true }
+            });
+            return res.send({ valid: true, bookings })
+        }else if(customerType === '3'){
+            const bookings = await prisma.booking.findMany({
+                where: {
+                    customerId: { not: null },
+                    customer: { customer_type: 'ENQUIRY' }
                 },
                 orderBy: { createdAt: 'desc' },
                 include: { store: true, customer: true, package: true }
