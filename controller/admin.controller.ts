@@ -75,7 +75,7 @@ const deleteStore = async (req: ExtendedRequest, res: Response, next: NextFuncti
 
 const createStore = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
-        const { name, address, phone, storeLocation } = req.body
+        const { name, address, phone, storeLocation, image } = req.body
         const isValidPayload = helper.isValidatePaylod(req.body, ['name', 'address', 'phone'])
         if (!isValidPayload) {
             return res.send({ status: 400, error: 'Invalid payload', error_description: 'store name, address and phone are requried.' })
@@ -85,7 +85,8 @@ const createStore = async (req: ExtendedRequest, res: Response, next: NextFuncti
                 name,
                 address,
                 phone,
-                storeLocation
+                storeLocation,
+                image
             },
         })
         return res.send({ valid: true, store })
@@ -393,10 +394,10 @@ const getEmployeeById = async (req: ExtendedRequest, res: Response, next: NextFu
 ////////////////////////////////////////////////////////////////////////// PACKAGE CONTROLLER //////////////////////////////////////////////////////////////////////////////
 const createPackage = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
-        const { name, price, title, description, overs } = req.body;
-        const isValidPayload = helper.isValidatePaylod(req.body, ['name', 'price', 'overs']);
+        const { name, price, overs, type, validity, normalMachinePrice, roboArmPrice, image } = req.body;
+        const isValidPayload = helper.isValidatePaylod(req.body, ['name', 'price', 'overs', 'type']);
         if (!isValidPayload) {
-            return res.send({ status: 400, error: 'Invalid payload', error_description: 'name, price and overs are required.' });
+            return res.send({ status: 400, error: 'Invalid payload', error_description: 'name, price, type and overs are required.' });
         }
 
         if(isNaN(Number(price))) {
@@ -406,10 +407,13 @@ const createPackage = async (req: ExtendedRequest, res: Response, next: NextFunc
         const newPackage = await prisma.package.create({
             data: {
                 name,
-                title,
                 price: parseInt(price),
-                description,
-                overs: parseInt(overs)
+                type,
+                overs: parseInt(overs),
+                validity,
+                normalMachinePrice: normalMachinePrice ? parseInt(normalMachinePrice) : null,
+                roboArmPrice: roboArmPrice ? parseInt(roboArmPrice) : null,
+                image,
             },
         })
         return res.send({ valid: true, newPackage })

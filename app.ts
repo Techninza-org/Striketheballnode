@@ -15,6 +15,9 @@ import empRouter from './routes/emp.routes';
 import customerRouter from './routes/customer.routes';
 import leadRouter from './routes/lead.routes';
 import helper from './utils/helpers';
+import { fileURLToPath } from 'url';
+import crypto from 'crypto';
+import userRouter from './routes/user.routes';
 
 const prisma = new PrismaClient();
 const app = express();
@@ -23,6 +26,41 @@ app.use(express.static('public'));
 app.use(express.json());
 app.use(morgan('tiny'));
 app.use(cors());
+
+
+app.use(express.static('public'));
+app.use(express.json());
+app.use('/uploads', express.static('uploads'));
+const uploadDir = path.join(process.cwd(), 'uploads');
+
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true }); 
+}
+
+const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex');
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const ext = path.extname(file.originalname); 
+        const fileName = randomImageName() + ext;
+        const fullPath = path.join(uploadDir, fileName);
+        cb(null, fileName);
+    }
+    
+});
+
+export const upload = multer({ storage });
+
+app.post('/upload', upload.single('file'), (req, res) => {
+    const file = req.file;
+    if (!file) {
+        return res.status(400).send({ error: 'No file uploaded' });
+    }
+    res.send({ message: 'File uploaded successfully', file: 'uploads/' + file.filename });
+});
 
 
 app.get('/', (_req, res) => {
@@ -464,6 +502,8 @@ app.use('/admin', adminRouter);
 app.use('/emp', empRouter);
 app.use('/customer', customerRouter);
 app.use('/lead', leadRouter);
+//@ts-ignore
+app.use('/user', middleware.UserMiddleware, userRouter)
 
 app.use(middleware.ErrorHandler);
 

@@ -6,5 +6,6 @@ const authRouter = Router()
 authRouter.post('/login', authController.Login)
 authRouter.post('/signup', authController.Signup)
 authRouter.get('/dashboard-details', authController.dashboardDetails)
+authRouter.post('/user-login', authController.userLogin)
 
 export default authRouter

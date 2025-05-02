@@ -402,9 +402,70 @@ const dashboardDetails = async (req: Request, res: Response, next: NextFunction)
 //     }
 // }
 
+const userLogin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { phone, otp } = req.body
+        if (!phone || !otp) {
+            return res.status(400).send({ status: 400, error: 'Invalid payload', error_description: 'phone and otp are required.' })
+        }
+
+        if(isNaN(Number(phone)) || phone.length !== 10){
+            return res.status(400).send({ status: 400, error: 'Invalid payload', error_description: 'phone should be a 10 digit number.' })
+        }
+
+        if(isNaN(Number(otp)) || otp.length !== 4){
+            return res.status(400).send({ status: 400, error: 'Invalid payload', error_description: 'otp should be a 4 digit number.' })
+        }
+
+        const isValidOtp = otp === "1234";
+        if (!isValidOtp) {
+            return res.status(400).send({ status: 400, error: 'Invalid OTP', error_description: 'otp is not valid.' })
+        }
+
+        const existingCustomer = await prisma.customer.findUnique({
+            where: { phone: phone },
+        })
+
+        const noOfCustomers = await prisma.customer.count({});
+
+        if(!existingCustomer){
+            await prisma.customer.create({
+                data: {
+                    phone: phone,
+                    name: 'Player' + noOfCustomers.toString(),
+                },
+            })
+        }
+
+        const customer = await prisma.customer.findUnique({
+            where: { phone: phone },
+        })
+
+        if(!customer){
+            return res.status(400).send({ status: 400, error: 'Invalid payload', error_description: 'customer not found.' })
+        }
+        const customerId = customer.id
+        const token = jwt.sign({ phone: phone, customerId: customerId }, process.env.JWT_SECRET!, {
+            expiresIn: '7d',
+        })
+
+        delete (customer as any).password
+
+        return res.status(200).send({
+            status: 200,
+            message: 'Ok',
+            user: customer,
+            token: token,
+        })
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const authController = {
     Login,
     Signup,
     dashboardDetails,
+    userLogin
 }
 export default authController

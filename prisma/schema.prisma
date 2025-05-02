@@ -17,6 +17,7 @@ enum BookingType {
   Package
   Custom
   Enquiry
+  App
 }
 
 enum BookingStatus {
@@ -30,6 +31,7 @@ enum CustomerType {
   IVR
   WA
   ENQUIRY
+  APP
 }
 
 model Employee {
@@ -59,20 +61,31 @@ model Store {
   employees     Employee[]
   bookings      Booking[]
   bookingOvers  BookingOvers[]
+  image        String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
 
+enum packageType {
+  INDIVIDUAL
+  PACKAGE
+}
+
 model Package {
-  id          Int       @id @default(autoincrement())
-  name        String
-  price       Int
-  overs       Int?
-  description String?
-  title       String?
-  bookings    Booking[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                 Int          @id @default(autoincrement())
+  name               String
+  price              Int
+  overs              Int?
+  description        String?
+  title              String?
+  bookings           Booking[]
+  validity           String?
+  image              String?
+  normalMachinePrice Int?
+  roboArmPrice       Int?
+  type               packageType?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 }
 
 model Booking {
@@ -100,12 +113,14 @@ model Customer {
   email         String?        @unique
   phone         String         @unique
   name          String
+  profile       String?
   customer_type CustomerType   @default(NORMAL)
   bookings      Booking[]
   bookingLog    BookingOvers[]
   Call          Call[]
   WAHook        WAHook[]
   leads         Lead[]
+  otp           Int?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
