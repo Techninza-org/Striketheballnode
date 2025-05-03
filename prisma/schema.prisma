@@ -69,6 +69,7 @@ model Store {
 enum packageType {
   INDIVIDUAL
   PACKAGE
+  SUBSCRIPTION  
 }
 
 model Package {
@@ -83,6 +84,8 @@ model Package {
   image              String?
   normalMachinePrice Int?
   roboArmPrice       Int?
+  sessionsPerMonth    Int?
+  oversPerMonth     Int?
   type               packageType?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt

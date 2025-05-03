@@ -394,7 +394,7 @@ const getEmployeeById = async (req: ExtendedRequest, res: Response, next: NextFu
 ////////////////////////////////////////////////////////////////////////// PACKAGE CONTROLLER //////////////////////////////////////////////////////////////////////////////
 const createPackage = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
-        const { name, price, overs, type, validity, normalMachinePrice, roboArmPrice, image } = req.body;
+        const { name, price, overs, type, validity, normalMachinePrice, roboArmPrice, image, sessionsPerMonth, oversPerMonth } = req.body;
         const isValidPayload = helper.isValidatePaylod(req.body, ['name', 'price', 'overs', 'type']);
         if (!isValidPayload) {
             return res.send({ status: 400, error: 'Invalid payload', error_description: 'name, price, type and overs are required.' });
@@ -414,6 +414,8 @@ const createPackage = async (req: ExtendedRequest, res: Response, next: NextFunc
                 normalMachinePrice: normalMachinePrice ? parseInt(normalMachinePrice) : null,
                 roboArmPrice: roboArmPrice ? parseInt(roboArmPrice) : null,
                 image,
+                sessionsPerMonth: sessionsPerMonth ? parseInt(sessionsPerMonth) : null,
+                oversPerMonth: oversPerMonth ? parseInt(oversPerMonth) : null
             },
         })
         return res.send({ valid: true, newPackage })
