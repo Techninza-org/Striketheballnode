@@ -129,7 +129,12 @@ const getPackages = async (req: ExtendedRequest, res: Response, next: NextFuncti
                 type: 'PACKAGE'
             },
         })
-        return res.status(200).send({ valid: true, message: 'Packages fetched successfully', individual: individualPackages, package: packages })
+        const subscriptions = await prisma.package.findMany({
+            where: {
+                type: 'SUBSCRIPTION'
+            },
+        })
+        return res.status(200).send({ valid: true, message: 'Packages fetched successfully', individual: individualPackages, package: packages, subscription: subscriptions })
     } catch (err) {
         return next(err)
     }
