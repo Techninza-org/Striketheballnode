@@ -402,6 +402,37 @@ const dashboardDetails = async (req: Request, res: Response, next: NextFunction)
 //     }
 // }
 
+
+const sendOtp = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { phone } = req.body
+        if (!phone) {
+            return res.status(400).send({ status: 400, error: 'Invalid payload', error_description: 'phone is required.' })
+        }
+
+        if(isNaN(Number(phone)) || phone.length !== 10){
+            return res.status(400).send({ status: 400, error: 'Invalid payload', error_description: 'phone should be a 10 digit number.' })
+        }
+
+        // const otp = Math.floor(1000 + Math.random() * 9000).toString()
+        const otp = 1234;
+
+        // await prisma.otp.create({
+        //     data: {
+        //         phone: phone,
+        //         otp: otp,
+        //     },
+        // })
+
+        // Send OTP via SMS (using Twilio or any other service)
+        // const message = await sendOtpViaSms(phone, otp)
+
+        return res.status(200).send({ status: 200, message: 'Ok', phone, otp })
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const userLogin = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { phone, otp } = req.body
@@ -466,6 +497,7 @@ const authController = {
     Login,
     Signup,
     dashboardDetails,
-    userLogin
+    userLogin,
+    sendOtp
 }
 export default authController
