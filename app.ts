@@ -73,7 +73,31 @@ app.get('/ping', (_req, res) => {
 
 app.post('/doubletickhook', async (req, res) => {
     try{
-        console.log('DoubleTick Received data:', JSON.stringify(req.body)); 
+        const {conversationOpened, customerName, customerPhone} = req.body;
+        console.log(conversationOpened, customerName, customerPhone, 'details');
+        const existingCustomer = await prisma.customer.findFirst({
+            where: {
+                phone: customerPhone
+            }
+        })
+        if(!existingCustomer){
+            const newCustomer = await prisma.customer.create({
+                data: {
+                    name: customerName,
+                    phone: customerPhone,
+                    customer_type: 'WA'
+                }
+            }) 
+            const newlead = await prisma.lead.create({
+                data: {
+                    customerId: newCustomer.id,
+                    stage: 'New',
+                    source: 'WhatsApp',
+                }
+            })
+        }else{
+            console.log('Customer already exists', customerPhone);
+        }
     }catch(err){
         console.log(err);
     }
