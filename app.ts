@@ -71,6 +71,15 @@ app.get('/ping', (_req, res) => {
     return res.status(200).send({ status: 200, message: 'pong' });
 });
 
+app.post('/doubletickhook', async (req, res) => {
+    try{
+        console.log('DoubleTick Received data:', JSON.stringify(req.body)); 
+    }catch(err){
+        console.log(err);
+    }
+    res.status(200).send('Webhook received successfully!');
+})
+
 app.post('/webhook', async (req, res) => {
     console.log('Received data:', JSON.stringify(req.body)); 
     try{
