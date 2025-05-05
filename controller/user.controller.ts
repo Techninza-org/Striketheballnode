@@ -56,9 +56,18 @@ const trendingPackages = async (req: ExtendedRequest, res: Response, next: NextF
 const bookSlot = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try{
         const { packageId, storeId, date, time} = req.body;
-        const isValidPayload = helper.isValidatePaylod(req.body, ['storeId', 'packageId', 'date', 'time']);
-        if(!isValidPayload) {
-            return res.send({ status: 400, error: 'Invalid payload', error_description: 'packageId, date, time and storeId are required.' });
+        // const isValidPayload = helper.isValidatePaylod(req.body, ['storeId', 'packageId', 'date', 'time']);
+        // if(!isValidPayload) {
+        //     return res.send({ status: 400, erroxr: 'Invalid payload', error_description: 'packageId, date, time and storeId are required.' });
+        // }
+        if(!packageId){
+            return res.send({ valid: false, error: 'Package ID not found.', error_description: 'Package ID is required' })
+        }
+        if(!storeId){
+            return res.send({ valid: false, error: 'Store ID not found.', error_description: 'Store ID is required' })
+        }
+        if(!date || !time){
+            return res.send({ valid: false, error: 'Date or time not found.', error_description: 'Date and time are required' })
         }
         const user = req.user;
         const { name, phone } = user;
