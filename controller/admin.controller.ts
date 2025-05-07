@@ -991,14 +991,15 @@ const uploadSheet = async (req: ExtendedRequest, res: Response, next: NextFuncti
         const csvText = file.buffer.toString('utf-8'); 
 
         let customers: any[] = [];
+        let bookings: any[] = [];
 
         Papa.parse(csvText, {
             header: true,
             skipEmptyLines: true,
             complete: async (results: any) => {
-                const data = results.data as { name: string; phone: string }[];
-                data.forEach(row => {
-                    
+                const data = results.data as { name: string; phone: string, date: string, overs: string, oversLeft: string, price: string }[];
+        
+                for (const row of data) {
                     if (row.name && row.phone) {
                         customers.push({
                             name: row.name,
@@ -1006,22 +1007,46 @@ const uploadSheet = async (req: ExtendedRequest, res: Response, next: NextFuncti
                             customer_type: 'NORMAL'
                         });
                     }
-                });
+        
+                    if (row.name && row.phone && row.date && row.overs && row.oversLeft && row.price) {
+                        const customer = await prisma.customer.findUnique({ where: { phone: row.phone } });
+        
+                        bookings.push({
+                            customerId: customer?.id,
+                            date: row.date,
+                            overs: parseInt(row.overs),
+                            oversLeft: parseInt(row.oversLeft),
+                            price: parseInt(row.price),
+                            bookingType: 'Custom',
+                            storeId: 1,
+                            paid: true
+                        });
+                    }
+                }
 
                 const resp = await handleCreateCustomers(customers);
-
-                return res.status(200).send({ valid: true, data: resp, message: 'Customers created successfully' });
+                const bs = await handleCreateBookings(bookings);
+                return res.status(200).send({ valid: true, data: resp, bookings: bs, message: 'Customers and bookings created successfully' });
             },
             error: (err: any) => {
                 console.error('Error parsing CSV:', err);
                 return res.status(500).send({ valid: false, error: 'Error parsing CSV file' });
             }
         });
+        
 
     } catch (err) {
         return next(err);
     }
 };
+
+async function handleCreateBookings(bookings: any[]){
+    const createdBookings = await prisma.booking.createMany({
+        data: bookings
+    })
+    return { bookings: createdBookings }
+}
+
 
 async function handleCreateCustomers(customers: any[]) {
     const existingCustomers = await prisma.customer.findMany({
