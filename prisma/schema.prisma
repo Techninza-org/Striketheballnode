@@ -61,7 +61,7 @@ model Store {
   employees     Employee[]
   bookings      Booking[]
   bookingOvers  BookingOvers[]
-  image        String?
+  image         String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -69,7 +69,7 @@ model Store {
 enum packageType {
   INDIVIDUAL
   PACKAGE
-  SUBSCRIPTION  
+  SUBSCRIPTION
 }
 
 model Package {
@@ -84,31 +84,33 @@ model Package {
   image              String?
   normalMachinePrice Int?
   roboArmPrice       Int?
-  sessionsPerMonth    Int?
-  oversPerMonth     Int?
+  sessionsPerMonth   Int?
+  oversPerMonth      Int?
   type               packageType?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 }
 
 model Booking {
-  id           Int            @id @default(autoincrement())
-  status       BookingStatus  @default(PENDING)
-  storeId      Int
-  bookingType  BookingType
-  date         String?
-  time         String?
-  overs        Int?
-  oversLeft    Int?
-  price        Int?
-  store        Store          @relation(fields: [storeId], references: [id])
-  packageId    Int?
-  package      Package?       @relation(fields: [packageId], references: [id])
-  customerId   Int?
-  customer     Customer?      @relation(fields: [customerId], references: [id])
-  bookingOvers BookingOvers[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id             Int            @id @default(autoincrement())
+  status         BookingStatus  @default(PENDING)
+  storeId        Int
+  bookingType    BookingType
+  date           String?
+  time           String?
+  overs          Int?
+  oversLeft      Int?
+  price          Int?
+  store          Store          @relation(fields: [storeId], references: [id])
+  packageId      Int?
+  package        Package?       @relation(fields: [packageId], references: [id])
+  customerId     Int?
+  customer       Customer?      @relation(fields: [customerId], references: [id])
+  bookingOvers   BookingOvers[]
+  lastPlayedDate DateTime?
+  paid           Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
 model Customer {

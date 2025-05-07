@@ -732,6 +732,24 @@ const createDirectBooking = async (req: ExtendedRequest, res: Response, next: Ne
     }
 };
 
+const markPaymentAsDone = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params
+        const booking = await prisma.booking.update({
+            where: { id: parseInt(id) },
+            data: {
+                paid: true,
+            },
+        })
+        if(!booking) {
+            return res.send({ valid: false, error: 'Booking not found.', error_description: 'Booking does not exist' })
+        }
+        return res.send({ valid: true, booking })
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const updateBooking = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
@@ -745,7 +763,8 @@ const updateBooking = async (req: ExtendedRequest, res: Response, next: NextFunc
             data: {
                 oversLeft: {
                     decrement: parseInt(playedOvers)
-                }
+                },
+                lastPlayedDate: new Date(),
             },
         });
         const customerId = booking.customerId;
@@ -1062,6 +1081,7 @@ const adminController = {
         getEmployeesAll,
         updateEmpPassword,
         createDirectBooking,
-        getTodayBookings
+        getTodayBookings,
+        markPaymentAsDone
     }
 export default adminController
