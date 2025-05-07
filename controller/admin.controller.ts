@@ -1048,22 +1048,34 @@ async function handleCreateBookings(bookings: any[]){
 
 
 async function handleCreateCustomers(customers: any[]) {
+    const uniqueCustomerMap = new Map<string, any>();
+    for (const customer of customers) {
+        const normalizedPhone = customer.phone.trim(); 
+        if (!uniqueCustomerMap.has(normalizedPhone)) {
+            uniqueCustomerMap.set(normalizedPhone, { ...customer, phone: normalizedPhone });
+        }
+    }
+    const uniqueCustomers = Array.from(uniqueCustomerMap.values());
+
     const existingCustomers = await prisma.customer.findMany({
         where: {
             phone: {
-                in: customers.map((customer) => customer.phone)
+                in: uniqueCustomers.map((customer) => customer.phone)
             }
         }
-    })
-    const newCustomers = customers.filter((customer) => {
-        return !existingCustomers.some((existingCustomer) => existingCustomer.phone === customer.phone)
-    })
-    const createdCustomers = await prisma.customer.createMany({
-        data: newCustomers
-    })
-    return { createdCustomers, existingCustomers }
+    });
 
+    const existingPhones = new Set(existingCustomers.map(c => c.phone));
+
+    const newCustomers = uniqueCustomers.filter(customer => !existingPhones.has(customer.phone));
+
+    if (newCustomers.length > 0) {
+        await prisma.customer.createMany({ data: newCustomers });
+    }
+
+    return { createdCount: newCustomers.length, existingCount: existingCustomers.length };
 }
+
 
 const adminController = {
         uploadSheet,
