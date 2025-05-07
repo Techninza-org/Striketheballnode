@@ -5,6 +5,7 @@ const customerRouter = Router()
 
 customerRouter.post('/', customerController.createCustomer)
 customerRouter.get('/', customerController.getCustomers)
+customerRouter.get('/clients', customerController.getClients)
 customerRouter.delete('/:id', customerController.deleteCustomer)
 customerRouter.put('/:id', customerController.editCustomer)
 customerRouter.get('/:id', customerController.getCustomerById)

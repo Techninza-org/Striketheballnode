@@ -45,6 +45,27 @@ const getCustomers = async (req: Request, res: Response, next: NextFunction) => 
     }
 }
 
+const getClients = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const bookings = await prisma.booking.findMany({});
+        const customerIds = bookings
+            .map((booking) => booking.customerId)
+            .filter((customerId) => customerId !== null) as number[];
+        const customers = await prisma.customer.findMany({
+            where: {
+                id: {
+                    in: customerIds,
+                },
+            },
+        });
+        return res
+            .status(200)
+            .send({ valid: true, message: 'Customers fetched successfully', customers });
+    } catch (err) {
+        return next(err);
+    }
+}
+
 const deleteCustomer = async (req: Request, res: Response, next: NextFunction) => {
     try{
         const { id } = req.params
@@ -97,7 +118,8 @@ const customerController = {
     getCustomers,
     deleteCustomer,
     editCustomer,
-    getCustomerById
+    getCustomerById,
+    getClients
 }
 
 export default customerController
