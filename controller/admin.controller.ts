@@ -1010,16 +1010,18 @@ const uploadSheet = async (req: ExtendedRequest, res: Response, next: NextFuncti
         
                     if (row.name && row.phone && row.oversConsumed && row.oversLeft && row.price) {
                         const customer = await prisma.customer.findUnique({ where: { phone: row.phone } });
-        
-                        bookings.push({
-                            customerId: customer?.id,
-                            overs: parseInt(row.oversConsumed) + parseInt(row.oversLeft),
-                            oversLeft: parseInt(row.oversLeft),
-                            price: parseInt(row.price),
-                            bookingType: 'Custom',
-                            storeId: 1,
-                            paid: true
-                        });
+
+                        if (customer) {
+                            bookings.push({
+                                customerId: customer.id,
+                                overs: parseInt(row.oversConsumed) + parseInt(row.oversLeft),
+                                oversLeft: parseInt(row.oversLeft),
+                                price: parseInt(row.price),
+                                bookingType: 'Custom',
+                                storeId: 1,
+                                paid: true
+                            });
+                        }
                     }
                 }
 
