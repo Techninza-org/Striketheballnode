@@ -499,6 +499,16 @@ app.post('/enquiry', async (req, res) => {
     }
 })
 
+app.post('/superfonehook', async (req, res) => {
+    try{
+        console.log('Superfone Webhook Received:', JSON.stringify(req.body));
+        return res.status(200).send('Webhook received successfully!');
+    }catch(err){
+        console.log(err);
+        return res.status(500).send('Internal Server Error');
+    }
+})
+
 app.get('/stores', async (req, res) => {
         try {
             const stores = await prisma.store.findMany()
