@@ -50,6 +50,8 @@ adminRouter.get('/booking/type/customer/:customerType', middleware.AdminMiddlewa
 //@ts-ignore
 adminRouter.get('/booking/status/:status', middleware.AdminMiddleware, adminController.getBookingsByStatus)
 //@ts-ignore
+adminRouter.get('/booking/payment/:paid', middleware.AdminMiddleware, adminController.getBookingsByPaidStatus)
+//@ts-ignore
 adminRouter.post('/booking', middleware.AdminMiddleware, adminController.createBooking)
 //@ts-ignore
 adminRouter.post('/direct/booking', middleware.AdminMiddleware, adminController.createDirectBooking)

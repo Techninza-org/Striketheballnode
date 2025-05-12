@@ -503,6 +503,27 @@ const getBookingsByCustomerId = async (req: ExtendedRequest, res: Response, next
     }
 }
 
+const getBookingsByPaidStatus = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { paid } = req.params
+        if(paid !== '0' && paid !== '1') {
+            return res.send({ valid: false, error: 'Invalid paid status', error_description: 'Paid status must be 0 or 1' })
+        }
+        if(paid === '0') {
+            const bookings = await prisma.booking.findMany({where: {paid: false}, orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
+            return res.send({ valid: true, bookings })
+        }else if(paid === '1'){
+            const bookings = await prisma.booking.findMany({where: {paid: true}, orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
+            return res.send({ valid: true, bookings })
+        }else {
+            const bookings = await prisma.booking.findMany({orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
+            return res.send({ valid: true, bookings })
+        }
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const getBookingsByCustomerType = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { customerType } = req.params
@@ -1120,6 +1141,7 @@ const adminController = {
         updateEmpPassword,
         createDirectBooking,
         getTodayBookings,
-        markPaymentAsDone
+        markPaymentAsDone,
+        getBookingsByPaidStatus,
     }
 export default adminController
