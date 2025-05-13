@@ -777,11 +777,16 @@ const createDirectBooking = async (req: ExtendedRequest, res: Response, next: Ne
 
 const markPaymentAsDone = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
+        const user = req.user
+        const username = user.name
+        const paymentDate = new Date()
         const { id } = req.params
         const booking = await prisma.booking.update({
             where: { id: parseInt(id) },
             data: {
                 paid: true,
+                paymentMarkedBy: username,
+                paymentMarkedAt: paymentDate,
             },
         })
         if(!booking) {

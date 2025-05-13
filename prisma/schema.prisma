@@ -108,6 +108,8 @@ model Booking {
   customer       Customer?      @relation(fields: [customerId], references: [id])
   bookingOvers   BookingOvers[]
   lastPlayedDate DateTime?
+  paymentMarkedBy String?
+  paymentMarkedAt DateTime?
   paid           Boolean        @default(false)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
