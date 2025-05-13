@@ -375,6 +375,96 @@ const getEmployeesAll = async (req: ExtendedRequest, res: Response, next: NextFu
     }
 }
 
+const getBookingsRevenueStoreWise = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try{
+        const date = req.params.date
+        console.log(date, 'date');
+        
+        const stores = await prisma.store.findMany();
+        if(date === 'null'){
+            
+            let storeRevenue = [];
+            for (let i = 0; i < stores.length; i++) {
+                const storeId = stores[i].id;
+                const storeName = stores[i].name;
+                const bookings = await prisma.booking.findMany({
+                    orderBy: { createdAt: 'desc' },
+                    where: { storeId: storeId }, 
+                    include: { store: true, customer: true, package: true },
+            });
+            
+                let totalRevenue = 0;
+            
+                bookings.forEach((booking) => {
+                    if (booking.price !== null) {
+                        totalRevenue += booking.price;
+                    }
+                });
+          
+              storeRevenue.push({
+                storeId,
+                storeName,
+                total: totalRevenue,
+              });
+            }
+            console.log(storeRevenue, 'storeRevenue');
+            
+            return res.status(200).send({ valid: true, revenue: storeRevenue });
+        }else {
+        const filterDate = date ? new Date(date as string) : null;
+        const now = filterDate || new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+        console.log(startOfDay, endOfDay, 'startOfDay');
+        
+
+        let storeRevenue = [];
+        for (let i = 0; i < stores.length; i++) {
+          const storeId = stores[i].id;
+          const storeName = stores[i].name;
+        
+          const bookings = await prisma.booking.findMany({
+            where: {
+              storeId: storeId,
+              ...(filterDate && {
+                createdAt: {
+                  gte: startOfDay!,
+                  lte: endOfDay!,
+                },
+              }),
+            },
+            orderBy: { createdAt: 'desc' },
+            include: { store: true, customer: true, package: true },
+          });
+        
+          let totalRevenue = 0;
+          let monthRevenue = 0;
+        
+          bookings.forEach((booking) => {
+            if (booking.price !== null) {
+              totalRevenue += booking.price;
+              monthRevenue += booking.price;
+            }
+          });
+        
+          storeRevenue.push({
+            storeId,
+            storeName,
+            total: totalRevenue,
+            month: monthRevenue,
+          });
+        }
+        console.log(storeRevenue, 'storeRevenue');
+        
+      return res.status(200).send({ valid: true, revenue: storeRevenue });
+    }
+    }catch(err){
+        console.log(err);
+        
+        return next(err)
+    }
+}
+
 const getEmployeeById = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
@@ -1172,6 +1262,7 @@ const adminController = {
         getTodayBookings,
         markPaymentAsDone,
         getBookingsByPaidStatus,
-        getBookingsByDate
+        getBookingsByDate,
+        getBookingsRevenueStoreWise
     }
 export default adminController

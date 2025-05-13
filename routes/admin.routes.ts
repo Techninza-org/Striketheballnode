@@ -89,5 +89,7 @@ adminRouter.post('/password/employee/:id', middleware.AdminMiddleware, adminCont
 adminRouter.get('/bookings/today', middleware.AdminMiddleware, adminController.getTodayBookings)
 //@ts-ignore
 adminRouter.post('/upload-sheet', upload.single('file'), middleware.AdminMiddleware, adminController.uploadSheet)
+//@ts-ignore
+adminRouter.get('/bookings/revenue/:date', middleware.AdminMiddleware, adminController.getBookingsRevenueStoreWise)
 
 export default adminRouter
