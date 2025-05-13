@@ -1158,7 +1158,7 @@ const uploadSheet = async (req: ExtendedRequest, res: Response, next: NextFuncti
                                 oversLeft: parseInt(row.oversLeft),
                                 price: parseInt(row.price),
                                 bookingType: 'Custom',
-                                storeId: 1,
+                                storeId: 2,
                                 paid: true
                             });
                         }
