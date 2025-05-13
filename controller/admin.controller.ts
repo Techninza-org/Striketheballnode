@@ -524,6 +524,28 @@ const getBookingsByPaidStatus = async (req: ExtendedRequest, res: Response, next
     }
 }
 
+const getBookingsByDate = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { date } = req.params
+        const now = new Date(date);
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).toISOString();
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString();
+        const bookings = await prisma.booking.findMany({
+            where: {
+                createdAt: {
+                    gte: startOfDay,
+                    lt: endOfDay
+                }
+            },
+            orderBy: { createdAt: 'desc' },
+            include: { store: true, customer: true, package: true }
+        });
+        return res.send({ valid: true, bookings })
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const getBookingsByCustomerType = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { customerType } = req.params
@@ -1143,5 +1165,6 @@ const adminController = {
         getTodayBookings,
         markPaymentAsDone,
         getBookingsByPaidStatus,
+        getBookingsByDate
     }
 export default adminController
