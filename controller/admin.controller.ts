@@ -329,7 +329,7 @@ const getEmployees = async (req: ExtendedRequest, res: Response, next: NextFunct
         const employees = await prisma.employee.findMany({
             where: {
             role: {
-                notIn: ['ADMIN', 'SUBADMIN']
+                notIn: ['ADMIN']
             }
             },
             select: {
@@ -339,7 +339,8 @@ const getEmployees = async (req: ExtendedRequest, res: Response, next: NextFunct
             storeId: true,
             accessTo: true,
             employeeId: true,
-            phone: true
+            phone: true,
+            role: true
             },
             orderBy: {
             createdAt: 'desc'
@@ -361,7 +362,8 @@ const getEmployeesAll = async (req: ExtendedRequest, res: Response, next: NextFu
             storeId: true,
             accessTo: true,
             employeeId: true,
-            phone: true
+            phone: true,
+            role: true
             },
             orderBy: {
             createdAt: 'desc'
