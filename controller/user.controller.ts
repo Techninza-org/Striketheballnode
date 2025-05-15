@@ -170,7 +170,8 @@ const getBookings = async (req: ExtendedRequest, res: Response, next: NextFuncti
             },
             include: {
               package: true,
-              store: true
+              store: true,
+              reviews: true
             }
         });
 
@@ -186,7 +187,8 @@ const getBookings = async (req: ExtendedRequest, res: Response, next: NextFuncti
             },
             include: {
                 package: true,
-                store: true
+                store: true,
+                reviews: true
             }
         })
 
@@ -202,7 +204,8 @@ const getBookings = async (req: ExtendedRequest, res: Response, next: NextFuncti
             },
             include: {
                 package: true,
-                store: true
+                store: true,
+                reviews: true
             }
         })
 
@@ -231,6 +234,54 @@ const searchPackages = async (req: ExtendedRequest, res: Response, next: NextFun
     }
 }
 
+const addReview = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try{
+        const { bookingId, review, rating } = req.body;
+        if(!bookingId){
+            return res.send({ valid: false, error: 'Booking ID not found.', error_description: 'Booking ID is required' })
+        }
+        if(!rating){
+            return res.send({ valid: false, error: 'Rating not found.', error_description: 'Rating is required' })
+        }
+        const user = req.user;
+        const booking = await prisma.booking.findUnique({
+            where: {
+                id: parseInt(bookingId),
+                customerId: user.id
+            }
+        })
+        if(!booking){
+            return res.send({ valid: false, error: 'Booking not found.', error_description: 'Booking does not exist' })
+        }
+
+        const isBookingCompleted = booking.oversLeft === 0;
+        if(!isBookingCompleted){
+            return res.send({ valid: false, error: 'Booking not completed.', error_description: 'Booking is not completed yet!' })
+        }
+
+        const reviewExist = await prisma.bookingReview.findFirst({
+            where: {
+                bookingId: booking.id,
+                userId: user.id
+            }
+        })
+        if(reviewExist){
+            return res.send({ valid: false, error: 'Review already exists.', error_description: 'Review already exists' })
+        }
+        const newReview = await prisma.bookingReview.create({
+            data: {
+                bookingId: booking.id,
+                userId: user.id,
+                review: review,
+                rating: rating
+            }
+        })
+        return res.status(200).send({ valid: true, message: 'Review added successfully', review: newReview })
+    }catch(err){
+        return next(err);
+    }
+}
+
 const userController = {
     getProfile,
     updateProfile,
@@ -238,7 +289,8 @@ const userController = {
     bookSlot,
     getPackages,
     getBookings,
-    searchPackages
+    searchPackages,
+    addReview
 }
 
 export default userController
