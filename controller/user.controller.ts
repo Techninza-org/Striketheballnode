@@ -243,6 +243,9 @@ const addReview = async (req: ExtendedRequest, res: Response, next: NextFunction
         if(!rating){
             return res.send({ valid: false, error: 'Rating not found.', error_description: 'Rating is required' })
         }
+        if(rating < 1 || rating > 5){
+            return res.send({ valid: false, error: 'Invalid rating.', error_description: 'Rating should be between 1 and 5' })
+        }
         const user = req.user;
         const booking = await prisma.booking.findUnique({
             where: {
