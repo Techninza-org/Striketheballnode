@@ -169,27 +169,21 @@ const getCustomerByLeadSource = async (req: ExtendedRequest, res: Response, next
     try {
         const { source } = req.params;
 
-        const latestLeads = await prisma.lead.groupBy({
-            by: ["customerId"],
-            _max: { createdAt: true },  
-        });
-
-        const validLeads = latestLeads.filter(lead => lead._max.createdAt !== null);
-
-        const filteredLeads = await prisma.lead.findMany({
-            where: {
-                customerId: { in: validLeads.map(lead => lead.customerId) },
-                createdAt: { in: validLeads.map(lead => lead._max.createdAt as Date) }, 
-                source: source,
-            },
-            select: { customerId: true },
-        });
-
-        const customerIds = filteredLeads.map((lead) => lead.customerId);
-
         const customers = await prisma.customer.findMany({
-            where: { id: { in: customerIds } },
-        });
+            where: {
+                leads: {
+                    some: {
+                        source: source,
+                    },
+                },
+            },
+            include: {
+                leads: true,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            }
+        })
 
         return res.status(200).send({ valid: true, customers });
     } catch (err) {
