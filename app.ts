@@ -529,7 +529,6 @@ app.post('/superfonehook', async (req, res) => {
                         name: contact_lead_stage_name
                     }
                 })
-                console.log(stageCreated, 'Stage Created');
             }
         }
         const existingCustomer = await prisma.customer.findFirst({
@@ -545,7 +544,6 @@ app.post('/superfonehook', async (req, res) => {
                     customer_type: 'SUPERFONE'
                 }
             })
-            console.log(newCustomer, 'New Customer Created');
             
 
             const lead = await prisma.lead.create({
@@ -560,7 +558,6 @@ app.post('/superfonehook', async (req, res) => {
                     callEnd: callEnd,
                 }
             })
-            console.log(lead, 'Lead Created');
         }else {
             const oldLead = await prisma.lead.create({
                 data: {
