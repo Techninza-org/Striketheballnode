@@ -32,6 +32,7 @@ enum CustomerType {
   WA
   ENQUIRY
   APP
+  SUPERFONE
 }
 
 model Employee {
@@ -92,49 +93,49 @@ model Package {
 }
 
 model Booking {
-  id             Int            @id @default(autoincrement())
-  status         BookingStatus  @default(PENDING)
-  storeId        Int
-  bookingType    BookingType
-  date           String?
-  time           String?
-  overs          Int?
-  oversLeft      Int?
-  price          Int?
-  store          Store          @relation(fields: [storeId], references: [id])
-  packageId      Int?
-  package        Package?       @relation(fields: [packageId], references: [id])
-  customerId     Int?
-  customer       Customer?      @relation(fields: [customerId], references: [id])
-  bookingOvers   BookingOvers[]
-  lastPlayedDate DateTime?
+  id              Int             @id @default(autoincrement())
+  status          BookingStatus   @default(PENDING)
+  storeId         Int
+  bookingType     BookingType
+  date            String?
+  time            String?
+  overs           Int?
+  oversLeft       Int?
+  price           Int?
+  store           Store           @relation(fields: [storeId], references: [id])
+  packageId       Int?
+  package         Package?        @relation(fields: [packageId], references: [id])
+  customerId      Int?
+  customer        Customer?       @relation(fields: [customerId], references: [id])
+  bookingOvers    BookingOvers[]
+  lastPlayedDate  DateTime?
   paymentMarkedBy String?
   paymentMarkedAt DateTime?
-  reviews       BookingReview[]
-  paid           Boolean        @default(false)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  reviews         BookingReview[]
+  paid            Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 }
 
 model BookingReview {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   bookingId Int
   booking   Booking   @relation(fields: [bookingId], references: [id])
-  userId   Int
+  userId    Int
   user      Customer? @relation(fields: [userId], references: [id])
   rating    Int
   review    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Customer {
-  id            Int            @id @default(autoincrement())
-  email         String?        @unique
-  phone         String         @unique
+  id            Int             @id @default(autoincrement())
+  email         String?         @unique
+  phone         String          @unique
   name          String
   profile       String?
-  customer_type CustomerType   @default(NORMAL)
+  customer_type CustomerType    @default(NORMAL)
   bookings      Booking[]
   bookingLog    BookingOvers[]
   Call          Call[]
@@ -142,8 +143,8 @@ model Customer {
   leads         Lead[]
   reviews       BookingReview[]
   otp           Int?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model BookingOvers {
@@ -207,6 +208,11 @@ model Lead {
   storeId      String?
   storeName    String?
   callbackDate DateTime?
+  staffName    String?
+  staffPhone   String?
+  callDuration String?
+  callStart    String?
+  callEnd      String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }

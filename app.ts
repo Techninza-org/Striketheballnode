@@ -499,9 +499,83 @@ app.post('/enquiry', async (req, res) => {
     }
 })
 
+function formatDuration(duration: number): string {
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    return `${minutes} min ${seconds} sec`;
+}
+
 app.post('/superfonehook', async (req, res) => {
     try{
         console.log('Superfone Webhook Received:', JSON.stringify(req.body));
+        const body = req.body;
+        const {contact_first_name, cdr_phone, staff_phone, staff_first_name, staff_last_name, cdr_start, contact_labels, contact_products, cdr_end, cdr_duration, contact_lead_stage_name} = body;
+        const customerPhone = cdr_phone.slice(-12);
+        const customerName = contact_first_name;
+        const staffPhone = staff_phone.slice(-12);
+        const staffName = staff_first_name + ' ' + staff_last_name;
+        const callDuration = formatDuration(cdr_duration);
+        const callStart = new Date(cdr_start).toLocaleString();
+        const callEnd = new Date(cdr_end).toLocaleString();
+        if(contact_lead_stage_name){
+            const stageExists= await prisma.stage.findFirst({
+                where: {
+                    name: contact_lead_stage_name
+                }
+            })
+            if(!stageExists){
+                const stageCreated = await prisma.stage.create({
+                    data: {
+                        name: contact_lead_stage_name
+                    }
+                })
+                console.log(stageCreated, 'Stage Created');
+            }
+        }
+        const existingCustomer = await prisma.customer.findFirst({
+            where: {
+                phone: customerPhone
+            }
+        })
+        if(!existingCustomer){
+            const newCustomer = await prisma.customer.create({
+                data: {
+                    name: customerName,
+                    phone: customerPhone,
+                    customer_type: 'SUPERFONE'
+                }
+            })
+            console.log(newCustomer, 'New Customer Created');
+            
+
+            const lead = await prisma.lead.create({
+                data: {
+                    customerId: newCustomer.id,
+                    stage: contact_lead_stage_name,
+                    source: 'Superfone',
+                    staffName: staffName,
+                    staffPhone: staffPhone,
+                    callDuration: callDuration,
+                    callStart: callStart,
+                    callEnd: callEnd,
+                }
+            })
+            console.log(lead, 'Lead Created');
+        }else {
+            const oldLead = await prisma.lead.create({
+                data: {
+                    customerId: existingCustomer.id,
+                    stage: contact_lead_stage_name,
+                    source: 'Superfone',
+                    staffName: staffName,
+                    staffPhone: staffPhone,
+                    callDuration: callDuration,
+                    callStart: callStart,
+                    callEnd: callEnd,
+                }
+            })
+        }
+        
         return res.status(200).send('Webhook received successfully!');
     }catch(err){
         console.log(err);
