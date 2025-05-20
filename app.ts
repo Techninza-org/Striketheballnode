@@ -75,7 +75,7 @@ app.post('/doubletickhook', async (req, res) => {
     try{
         console.log('Double Tick Webhook Received:', JSON.stringify(req.body));
         
-        const {conversationOpened, customerName, customerPhone} = req.body;
+        const {conversationOpened, customerName, customerPhone, tagName, from, tagAdded, tagRemoved} = req.body;
         console.log(conversationOpened, customerName, customerPhone, 'details');
         const existingCustomer = await prisma.customer.findFirst({
             where: {
@@ -99,6 +99,35 @@ app.post('/doubletickhook', async (req, res) => {
             })
         }else{
             console.log('Customer already exists', customerPhone);
+        }
+        if(tagName && from){
+            const stageExists= await prisma.stage.findFirst({
+                where: {
+                    name: tagName.capitalize()
+                }
+            })
+            if(!stageExists){
+                const stageCreated = await prisma.stage.create({
+                    data: {
+                        name: tagName.capitalize()
+                    }
+                })
+            }
+            const customer = await prisma.customer.findFirst({
+                where: {
+                    phone: from
+                }
+            })
+            if(customer){
+                const customer_id = customer?.id;
+                const lead = await prisma.lead.create({
+                    data: {
+                        customerId: customer_id,
+                        stage: tagName.capitalize(),
+                        source: 'DoubleTick',
+                    }
+                })
+            }
         }
     }catch(err){
         console.log(err);
