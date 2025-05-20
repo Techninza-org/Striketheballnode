@@ -100,7 +100,7 @@ app.post('/doubletickhook', async (req, res) => {
         }else{
             console.log('Customer already exists', customerPhone);
         }
-        if(tagName && from){
+        if(tagName && from && tagAdded){
             console.log(tagName, 'tagName', from, 'from');
             
             const stageExists= await prisma.stage.findFirst({
