@@ -531,6 +531,8 @@ app.post('/superfonehook', async (req, res) => {
                 })
             }
         }
+        console.log(contact_lead_stage_name, 'contact_lead_stage_name');
+        
         const existingCustomer = await prisma.customer.findFirst({
             where: {
                 phone: customerPhone
@@ -544,12 +546,14 @@ app.post('/superfonehook', async (req, res) => {
                     customer_type: 'SUPERFONE'
                 }
             })
+            console.log(newCustomer, 'newCustomer');
+            
             
 
             const lead = await prisma.lead.create({
                 data: {
                     customerId: newCustomer.id,
-                    stage: contact_lead_stage_name,
+                    stage: contact_lead_stage_name || "Others",
                     source: 'Superfone',
                     staffName: staffName,
                     staffPhone: staffPhone,
@@ -558,11 +562,13 @@ app.post('/superfonehook', async (req, res) => {
                     callEnd: callEnd,
                 }
             })
+            console.log(lead, 'lead');
+            
         }else {
             const oldLead = await prisma.lead.create({
                 data: {
                     customerId: existingCustomer.id,
-                    stage: contact_lead_stage_name,
+                    stage: contact_lead_stage_name || "Others",
                     source: 'Superfone',
                     staffName: staffName,
                     staffPhone: staffPhone,
@@ -571,6 +577,8 @@ app.post('/superfonehook', async (req, res) => {
                     callEnd: callEnd,
                 }
             })
+            console.log(oldLead, 'oldLead');
+            
         }
         
         return res.status(200).send('Webhook received successfully!');
