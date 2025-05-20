@@ -73,6 +73,8 @@ app.get('/ping', (_req, res) => {
 
 app.post('/doubletickhook', async (req, res) => {
     try{
+        console.log('Double Tick Webhook Received:', JSON.stringify(req.body));
+        
         const {conversationOpened, customerName, customerPhone} = req.body;
         console.log(conversationOpened, customerName, customerPhone, 'details');
         const existingCustomer = await prisma.customer.findFirst({
@@ -548,8 +550,6 @@ app.post('/superfonehook', async (req, res) => {
             })
             console.log(newCustomer, 'newCustomer');
             
-            
-
             const lead = await prisma.lead.create({
                 data: {
                     customerId: newCustomer.id,
