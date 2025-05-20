@@ -105,7 +105,7 @@ app.post('/doubletickhook', async (req, res) => {
             
             const stageExists= await prisma.stage.findFirst({
                 where: {
-                    name: tagName.capitalize()
+                    name: tagName
                 }
             })
             console.log(stageExists, 'stageExists');
@@ -113,7 +113,7 @@ app.post('/doubletickhook', async (req, res) => {
             if(!stageExists){
                 const stageCreated = await prisma.stage.create({
                     data: {
-                        name: tagName.capitalize()
+                        name: tagName
                     }
                 })
                 console.log(stageCreated, 'stageCreated');
@@ -129,7 +129,7 @@ app.post('/doubletickhook', async (req, res) => {
                 const lead = await prisma.lead.create({
                     data: {
                         customerId: customer_id,
-                        stage: tagName.capitalize(),
+                        stage: tagName,
                         source: 'DoubleTick',
                     }
                 })
