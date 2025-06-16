@@ -39,7 +39,7 @@ model Employee {
   id           Int            @id @default(autoincrement())
   email        String         @unique
   employeeId   Int?           @unique
-  phone        String?        @unique
+  phone        String?       
   name         String
   password     String
   isSubadmin   Boolean        @default(false)

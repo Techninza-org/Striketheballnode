@@ -225,14 +225,14 @@ const createEmployee = async (req: ExtendedRequest, res: Response, next: NextFun
         const s_id = parseInt(storeId);
 
         const employeeExist = await prisma.employee.findFirst({
-            where: { OR: [{ email: email }, { phone: phone }] }
+            where: { email }
         })
 
         if(employeeExist) {
             return res.status(400).send({
                 status: 400,
                 error: 'Invalid payload',
-                error_description: 'Employee email or phone already exist.',
+                error_description: 'Employee email already exist.',
             });
         }
 
