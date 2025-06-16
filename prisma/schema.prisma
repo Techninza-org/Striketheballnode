@@ -47,6 +47,7 @@ model Employee {
   storeId      Int?
   store        Store?         @relation(fields: [storeId], references: [id])
   accessTo     Json?
+  appAccess    Json?
   bookingOvers BookingOvers[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt

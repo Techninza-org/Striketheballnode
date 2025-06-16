@@ -142,6 +142,10 @@ const createSubadmin = async (req: ExtendedRequest, res: Response, next: NextFun
                 },
                 role: 'SUBADMIN',
                 phone,
+                appAccess: {
+                    'clients': true,
+                    'bookings': true,
+                }
             },
         });
 
@@ -254,6 +258,9 @@ const createEmployee = async (req: ExtendedRequest, res: Response, next: NextFun
                 accessTo,
                 employeeId,
                 phone,
+                appAccess: {
+                    'bookings': true
+                }
             },
         });
 
