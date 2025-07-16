@@ -493,11 +493,53 @@ const userLogin = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+const guestLogin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const phone = 'GUEST-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+        const existingCustomer = await prisma.customer.findUnique({
+            where: { phone: phone },
+        })
+
+        if(!existingCustomer){
+            await prisma.customer.create({
+                data: {
+                    phone: phone,
+                    name: `Guest-${crypto.randomUUID().slice(0, 6)}`
+                },
+            })
+        }
+
+        const customer = await prisma.customer.findUnique({
+            where: { phone: phone },
+        })
+
+        if(!customer){
+            return res.status(400).send({ status: 400, error: 'Invalid payload', error_description: 'customer not found.' })
+        }
+        const customerId = customer.id
+        const token = jwt.sign({ phone: phone, customerId: customerId }, process.env.JWT_SECRET!, {
+            expiresIn: '7d',
+        })
+
+        delete (customer as any).password
+
+        return res.status(200).send({
+            status: 200,
+            message: 'Ok',
+            user: customer,
+            token: token,
+        })
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const authController = {
     Login,
     Signup,
     dashboardDetails,
     userLogin,
-    sendOtp
+    sendOtp,
+    guestLogin
 }
 export default authController
