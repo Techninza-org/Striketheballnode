@@ -65,7 +65,7 @@ model Store {
   name          String?
   address       String?
   storeLocation String?
-  mapsLocation  String?
+  mapsLocation  String?     @db.Text
   phone         String?
   employees     Employee[]
   bookings      Booking[]
