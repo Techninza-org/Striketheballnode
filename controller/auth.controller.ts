@@ -534,12 +534,22 @@ const guestLogin = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+const getAppBanners = async (req: Request, res: Response, next: NextFunction) => {
+    try{
+      const banners = await prisma.appBanner.findMany({})
+      return res.status(200).send({ valid: true, banners });
+    }catch(err){
+      return next(err);
+    }
+}
+
 const authController = {
     Login,
     Signup,
     dashboardDetails,
     userLogin,
     sendOtp,
-    guestLogin
+    guestLogin,
+    getAppBanners
 }
 export default authController
