@@ -145,6 +145,7 @@ const updateBookingEmp = async (req: ExtendedRequest, res: Response, next: NextF
         const booking = await prisma.booking.update({
             where: { id: parseInt(id) },
             data: {
+                lastPlayedDate: new Date(),
                 oversLeft: {
                     decrement: parseInt(playedOvers)
                 }

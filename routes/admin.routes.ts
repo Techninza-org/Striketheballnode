@@ -91,5 +91,11 @@ adminRouter.get('/bookings/today', middleware.AdminMiddleware, adminController.g
 adminRouter.post('/upload-sheet', upload.single('file'), middleware.AdminMiddleware, adminController.uploadSheet)
 //@ts-ignore
 adminRouter.get('/bookings/revenue/:date', middleware.AdminMiddleware, adminController.getBookingsRevenueStoreWise)
+//@ts-ignore
+adminRouter.post('/add-banner', middleware.AdminMiddleware, adminController.addBanner)
+//@ts-ignore
+adminRouter.get('/banner', middleware.AdminMiddleware, adminController.getAllBanners)
+//@ts-ignore
+adminRouter.delete('/banner/:id', middleware.AdminMiddleware, adminController.deleteBannerById)
 
 export default adminRouter

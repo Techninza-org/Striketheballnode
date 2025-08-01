@@ -1226,8 +1226,47 @@ async function handleCreateCustomers(customers: any[]) {
     return { createdCount: newCustomers.length, existingCount: existingCustomers.length };
 }
 
+async function addBanner(req: ExtendedRequest, res: Response, next: NextFunction) {
+    try {
+        const { imageUrl } = req.body;
+        if (!imageUrl) {
+            return res.status(400).send({ valid: false, error: 'Image URL is required.' });
+        }
+        const banner = await prisma.appBanner.create({
+            data: { image: imageUrl }
+        });
+        return res.status(200).send({ valid: true, banner });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+async function getAllBanners(req: ExtendedRequest, res: Response, next: NextFunction) {
+    try {
+        const banners = await prisma.appBanner.findMany();
+        return res.status(200).send({ valid: true, banners });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+async function deleteBannerById(req: ExtendedRequest, res: Response, next: NextFunction) {
+    try {
+        const { id } = req.params;
+        const banner = await prisma.appBanner.delete({
+            where: { id: parseInt(id) }
+        });
+        return res.status(200).send({ valid: true, banner });
+    } catch (err) {
+        return next(err);
+    }
+}
+
 
 const adminController = {
+        addBanner,
+        getAllBanners,
+        deleteBannerById,
         uploadSheet,
         getStores,
         getBookingLogsByStoreId,

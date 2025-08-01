@@ -55,7 +55,7 @@ const trendingPackages = async (req: ExtendedRequest, res: Response, next: NextF
 
 const bookSlot = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try{
-        const { packageId, storeId, date, time} = req.body;
+        const { packageId, storeId, date, time, pitch} = req.body;
         // const isValidPayload = helper.isValidatePaylod(req.body, ['storeId', 'packageId', 'date', 'time']);
         // if(!isValidPayload) {
         //     return res.send({ status: 400, erroxr: 'Invalid payload', error_description: 'packageId, date, time and storeId are required.' });
@@ -68,6 +68,9 @@ const bookSlot = async (req: ExtendedRequest, res: Response, next: NextFunction)
         }
         if(!date || !time){
             return res.send({ valid: false, error: 'Date or time not found.', error_description: 'Date and time are required' })
+        }
+        if(!pitch){
+            return res.send({ valid: false, error: 'Pitch not found.', error_description: 'Pitch is required' })
         }
         const user = req.user;
         const { name, phone } = user;
@@ -112,6 +115,7 @@ const bookSlot = async (req: ExtendedRequest, res: Response, next: NextFunction)
                 time,
                 customerId: customer_id,
                 storeId,
+                pitch: Number(pitch),
                 price: packageExist?.price,
                 bookingType: 'App',
                 packageId: packageId,
