@@ -97,5 +97,7 @@ adminRouter.post('/add-banner', middleware.AdminMiddleware, adminController.addB
 adminRouter.get('/banner', middleware.AdminMiddleware, adminController.getAllBanners)
 //@ts-ignore
 adminRouter.delete('/banner/:id', middleware.AdminMiddleware, adminController.deleteBannerById)
+//@ts-ignore
+adminRouter.post('/send-notification', middleware.AdminMiddleware, adminController.sendGlobalNotification)
 
 export default adminRouter

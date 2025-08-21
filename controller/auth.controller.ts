@@ -543,6 +543,18 @@ const getAppBanners = async (req: Request, res: Response, next: NextFunction) =>
     }
 }
 
+const getGlobalNotifications =  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const notifications = await prisma.globalNotification.findMany({
+            orderBy: { createdAt: 'desc' },
+        });
+
+        return res.status(200).send({ valid: true, notifications });
+    } catch (err) {
+        return next(err);
+    }
+}
+
 const authController = {
     Login,
     Signup,
@@ -550,6 +562,7 @@ const authController = {
     userLogin,
     sendOtp,
     guestLogin,
-    getAppBanners
+    getAppBanners,
+    getGlobalNotifications
 }
 export default authController

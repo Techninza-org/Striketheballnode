@@ -10,5 +10,6 @@ authRouter.post('/user-login', authController.userLogin)
 authRouter.post('/sendOtp', authController.sendOtp)
 authRouter.get('/guest-login', authController.guestLogin)
 authRouter.get('/banners', authController.getAppBanners)
+authRouter.get('/notifications', authController.getGlobalNotifications)
 
 export default authRouter

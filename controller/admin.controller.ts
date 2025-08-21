@@ -1262,8 +1262,28 @@ async function deleteBannerById(req: ExtendedRequest, res: Response, next: NextF
     }
 }
 
+async function sendGlobalNotification(req: ExtendedRequest, res: Response, next: NextFunction) {
+    try {
+        const { title, body } = req.body;
+        if (!title || !body) {
+            return res.status(400).send({ valid: false, error: 'Title and body are required.' });
+        }
+        const notif = await prisma.globalNotification.create({
+            data: {
+                title,
+                body
+            }
+        })
+        
+        return res.status(200).send({ valid: true, message: 'Notification sent successfully.', nofication: notif });
+    } catch (err) {
+        return next(err);
+    }
+}
+
 
 const adminController = {
+        sendGlobalNotification,
         addBanner,
         getAllBanners,
         deleteBannerById,
