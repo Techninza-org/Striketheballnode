@@ -1144,7 +1144,7 @@ const uploadSheet = async (req: ExtendedRequest, res: Response, next: NextFuncti
             header: true,
             skipEmptyLines: true,
             complete: async (results: any) => {
-                const data = results.data as { name: string; phone: string, date: string, oversConsumed: string, oversLeft: string, price: string }[];
+                const data = results.data as { name: string; phone: string, date: string, overs: string, oversLeft: string, price: string }[];
         
                 for (const row of data) {
                     if (row.name && row.phone) {
@@ -1155,13 +1155,13 @@ const uploadSheet = async (req: ExtendedRequest, res: Response, next: NextFuncti
                         });
                     }
         
-                    if (row.name && row.phone && row.oversConsumed && row.oversLeft && row.price && row.date) {
+                    if (row.name && row.phone && row.overs && row.oversLeft && row.price && row.date) {
                         const customer = await prisma.customer.findUnique({ where: { phone: row.phone } });
 
                         if (customer) {
                             bookings.push({
                                 customerId: customer.id,
-                                overs: parseInt(row.oversConsumed) + parseInt(row.oversLeft),
+                                overs: parseInt(row.overs),
                                 oversLeft: parseInt(row.oversLeft),
                                 price: parseInt(row.price),
                                 bookingType: 'Custom',
