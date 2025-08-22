@@ -1154,7 +1154,10 @@ const uploadSheet = async (req: ExtendedRequest, res: Response, next: NextFuncti
                             customer_type: 'NORMAL'
                         });
                     }
-        
+                }
+                const resp = await handleCreateCustomers(customers);
+
+                for (const row of data) {
                     if (row.name && row.phone && row.overs && row.oversLeft && row.price && row.date) {
                         const customer = await prisma.customer.findUnique({ where: { phone: row.phone } });
 
@@ -1165,7 +1168,7 @@ const uploadSheet = async (req: ExtendedRequest, res: Response, next: NextFuncti
                                 oversLeft: parseInt(row.oversLeft),
                                 price: parseInt(row.price),
                                 bookingType: 'Custom',
-                                storeId: 1,
+                                storeId: 2,
                                 date: row.date,
                                 paid: true
                             });
@@ -1173,7 +1176,7 @@ const uploadSheet = async (req: ExtendedRequest, res: Response, next: NextFuncti
                     }
                 }
 
-                const resp = await handleCreateCustomers(customers);
+                
                 const bs = await handleCreateBookings(bookings);
                 return res.status(200).send({ valid: true, data: resp, bookings: bs, message: 'Customers and bookings created successfully' });
             },
