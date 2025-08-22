@@ -1165,7 +1165,7 @@ const uploadSheet = async (req: ExtendedRequest, res: Response, next: NextFuncti
                                 oversLeft: parseInt(row.oversLeft),
                                 price: parseInt(row.price),
                                 bookingType: 'Custom',
-                                storeId: 11,
+                                storeId: 1,
                                 date: row.date,
                                 paid: true
                             });
