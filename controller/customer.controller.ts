@@ -7,14 +7,14 @@ const prisma = new PrismaClient()
 const createCustomer = async (req: Request, res: Response, next: NextFunction) => {
     try{
         const { email, name, phone } = req.body
-        const isValidPayload = helper.isValidatePaylod(req.body, ['phone', 'name']);
-        if (!isValidPayload) {
-            return res.status(400).send({
-                status: 400,
-                error: 'Invalid payload',
-                error_description: 'name and phone are required.',
-            });
-        }
+        // const isValidPayload = helper.isValidatePaylod(req.body, ['phone', 'name']);
+        // if (!isValidPayload) {
+        //     return res.status(400).send({
+        //         status: 400,
+        //         error: 'Invalid payload',
+        //         error_description: 'name and phone are required.',
+        //     });
+        // }
         const existingCustomer = await prisma.customer.findFirst({
             where: {
                 phone: phone
