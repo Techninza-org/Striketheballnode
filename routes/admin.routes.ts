@@ -42,6 +42,8 @@ adminRouter.delete('/package/:id', middleware.AdminMiddleware, adminController.d
 //@ts-ignore
 adminRouter.get('/booking', middleware.AdminMiddleware, adminController.getBookings)    
 //@ts-ignore
+adminRouter.delete('/booking/delete/:id', middleware.AdminMiddleware, adminController.deleteBookingById)    
+//@ts-ignore
 adminRouter.get('/booking/customer/:id', middleware.AdminMiddleware, adminController.getBookingsByCustomerId)    
 //@ts-ignore
 adminRouter.get('/booking/:storeId', middleware.AdminMiddleware, adminController.getBookingsByStore)

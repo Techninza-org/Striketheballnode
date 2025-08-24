@@ -110,14 +110,14 @@ const createSubadmin = async (req: ExtendedRequest, res: Response, next: NextFun
             });
         }
         const employeeExist = await prisma.employee.findFirst({
-            where: { OR: [{ email: email }, { phone: phone }] }
+            where: { email }
         })
 
         if(employeeExist) {
             return res.status(400).send({
                 status: 400,
                 error: 'Invalid payload',
-                error_description: 'Employee email or phone already exist.',
+                error_description: 'Employee email already exist.',
             });
         }
 
@@ -141,7 +141,6 @@ const createSubadmin = async (req: ExtendedRequest, res: Response, next: NextFun
                     'calls': true,
                 },
                 role: 'SUBADMIN',
-                phone,
                 appAccess: {
                     'clients': true,
                     'bookings': true,
@@ -583,6 +582,27 @@ const getBookings = async (req: ExtendedRequest, res: Response, next: NextFuncti
     try {
         const bookings = await prisma.booking.findMany({orderBy: {createdAt: 'desc'}, include: {store: true, customer: true, package: true}})
         return res.send({ valid: true, bookings })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const deleteBookingById = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params
+        console.log(id, 'id');
+        
+        const book = await prisma.booking.findFirst({
+            where: { id: parseInt(id) },
+        })
+        if(!book) {
+            return res.send({ valid: false, error: 'Booking not found.', error_description: 'Booking does not exist' })
+        }
+        const booking = await prisma.booking.delete({
+            where: { id: parseInt(id) },
+        })
+        
+        return res.send({ valid: true, msg: "Booking deleted" })
     } catch (err) {
         return next(err)
     }
@@ -1333,6 +1353,7 @@ const adminController = {
         markPaymentAsDone,
         getBookingsByPaidStatus,
         getBookingsByDate,
-        getBookingsRevenueStoreWise
+        getBookingsRevenueStoreWise,
+        deleteBookingById
     }
 export default adminController
