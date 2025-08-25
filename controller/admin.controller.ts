@@ -966,10 +966,21 @@ const updateBookingOvers = async (req: ExtendedRequest, res: Response, next: Nex
         if (!isValidPayload) {
             return res.send({ status: 400, error: 'Invalid payload', error_description: 'overs is required.' });
         }
+        const book = await prisma.booking.findFirst({
+            where: {id: parseInt(id)}
+        });
+        if(!book){
+            return res.send({ valid: false, msg: 'Booking not found' });
+        }
+        const prevOvers = book?.overs
+        const oversIncreased = parseInt(String(overs)) - parseInt(String(prevOvers));
         const booking = await prisma.booking.update({
             where: { id: parseInt(id) },
             data: {
-                overs: parseInt(overs) 
+                overs: parseInt(String(overs)), 
+                oversLeft: {
+                    increment: parseInt(String(oversIncreased))
+                }
             }
         });
         return res.send({ valid: true, booking });
