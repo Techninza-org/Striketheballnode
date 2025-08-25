@@ -958,6 +958,44 @@ const updateBooking = async (req: ExtendedRequest, res: Response, next: NextFunc
     }
 }
 
+const updateBookingOvers = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const { overs } = req.body;
+        const isValidPayload = helper.isValidatePaylod(req.body, ['overs']);
+        if (!isValidPayload) {
+            return res.send({ status: 400, error: 'Invalid payload', error_description: 'overs is required.' });
+        }
+        const booking = await prisma.booking.update({
+            where: { id: parseInt(id) },
+            data: {
+                overs: parseInt(overs) 
+            }
+        });
+        return res.send({ valid: true, booking });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+const updateBookingPrice = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const { price } = req.body;
+        const isValidPayload = helper.isValidatePaylod(req.body, ['price']);
+        if (!isValidPayload) {
+            return res.send({ status: 400, error: 'Invalid payload', error_description: 'price is required.' });
+        }
+        const booking = await prisma.booking.update({
+            where: { id: parseInt(id) },
+            data: { price: parseInt(price) }
+        });
+        return res.send({ valid: true, booking });
+    } catch (err) {
+        return next(err);
+    }
+}
+
 const getBookingById = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
@@ -1354,6 +1392,8 @@ const adminController = {
         getBookingsByPaidStatus,
         getBookingsByDate,
         getBookingsRevenueStoreWise,
-        deleteBookingById
+        deleteBookingById,
+        updateBookingOvers,
+        updateBookingPrice
     }
 export default adminController

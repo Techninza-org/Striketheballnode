@@ -62,6 +62,10 @@ adminRouter.post('/direct/booking', middleware.AdminMiddleware, adminController.
 //@ts-ignore
 adminRouter.put('/booking/:id', middleware.AdminMiddleware, adminController.updateBooking)
 //@ts-ignore
+adminRouter.put('/booking/overs/:id', middleware.AdminMiddleware, adminController.updateBookingOvers)
+//@ts-ignore
+adminRouter.put('/booking/price/:id', middleware.AdminMiddleware, adminController.updateBookingPrice)
+//@ts-ignore
 adminRouter.get('/booking/payment/mark/:id', middleware.AdminMiddleware, adminController.markPaymentAsDone)
 //@ts-ignore
 adminRouter.get('/booking/details/:id', middleware.AdminMiddleware, adminController.getBookingById)
