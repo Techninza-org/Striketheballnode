@@ -166,8 +166,8 @@ model Customer {
 
 model BookingOvers {
   id         Int       @id @default(autoincrement())
-  bookingId  Int
-  booking    Booking   @relation(fields: [bookingId], references: [id])
+  bookingId  Int?
+  booking    Booking?   @relation(fields: [bookingId], references: [id])
   employee   Employee? @relation(fields: [employeeId], references: [id])
   employeeId Int?
   storeId    Int?

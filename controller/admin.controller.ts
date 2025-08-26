@@ -591,6 +591,16 @@ const deleteBookingById = async (req: ExtendedRequest, res: Response, next: Next
     try {
         const { id } = req.params
         console.log(id, 'id');
+
+        const bookingOvers = await prisma.bookingOvers.findMany({
+            where: { bookingId: parseInt(id) }
+        })
+
+        if(bookingOvers.length > 0) {
+            await prisma.bookingOvers.deleteMany({
+                where: { bookingId: parseInt(id) }
+            })
+        }
         
         const book = await prisma.booking.findFirst({
             where: { id: parseInt(id) },
