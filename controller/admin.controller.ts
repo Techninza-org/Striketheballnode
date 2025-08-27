@@ -1035,7 +1035,51 @@ const getBookingById = async (req: ExtendedRequest, res: Response, next: NextFun
 
 const getBookingLogs = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
+        const { date, startDate, endDate, month, year, filterType, storeId } = req.query;
+        
+        let startFilterDate = null;
+        let endFilterDate = null;
+        
+        // Handle different filter types
+        if (filterType === 'dateRange' && startDate && endDate) {
+            startFilterDate = new Date(startDate as string);
+            endFilterDate = new Date(endDate as string);
+            endFilterDate.setHours(23, 59, 59, 999); // End of day
+        } else if (filterType === 'month' && month && year) {
+            const monthNum = parseInt(month as string) - 1; // Month is 0-indexed
+            const yearNum = parseInt(year as string);
+            startFilterDate = new Date(yearNum, monthNum, 1);
+            endFilterDate = new Date(yearNum, monthNum + 1, 0, 23, 59, 59, 999);
+        } else if (filterType === 'year' && year) {
+            const yearNum = parseInt(year as string);
+            startFilterDate = new Date(yearNum, 0, 1);
+            endFilterDate = new Date(yearNum, 11, 31, 23, 59, 59, 999);
+        } else if (date) {
+            // Legacy support for single date (monthly filter)
+            const filterDate = new Date(date as string);
+            startFilterDate = new Date(filterDate.getFullYear(), filterDate.getMonth(), 1);
+            endFilterDate = new Date(filterDate.getFullYear(), filterDate.getMonth() + 1, 0, 23, 59, 59, 999);
+        }
+
+        const whereClause: any = {};
+        
+        // Add date filters
+        if (startFilterDate && endFilterDate) {
+            whereClause.createdAt = {
+                gte: startFilterDate,
+                lte: endFilterDate,
+            };
+        }
+        
+        // Add store filter
+        if (storeId) {
+            whereClause.booking = {
+                storeId: parseInt(storeId as string)
+            };
+        }
+
         const bookingLogs = await prisma.bookingOvers.findMany({
+            where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
             include: {booking: {include: {store: {select: {name: true}}, customer: {select: {name: true, email: true}}}}, employee: {select: {name: true, email: true}}},
             orderBy: {createdAt: 'desc'}
         });
@@ -1048,8 +1092,46 @@ const getBookingLogs = async (req: ExtendedRequest, res: Response, next: NextFun
 const getBookingLogsByStoreId = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
+        const { date, startDate, endDate, month, year, filterType } = req.query;
+        
+        let startFilterDate = null;
+        let endFilterDate = null;
+        
+        // Handle different filter types
+        if (filterType === 'dateRange' && startDate && endDate) {
+            startFilterDate = new Date(startDate as string);
+            endFilterDate = new Date(endDate as string);
+            endFilterDate.setHours(23, 59, 59, 999); // End of day
+        } else if (filterType === 'month' && month && year) {
+            const monthNum = parseInt(month as string) - 1; // Month is 0-indexed
+            const yearNum = parseInt(year as string);
+            startFilterDate = new Date(yearNum, monthNum, 1);
+            endFilterDate = new Date(yearNum, monthNum + 1, 0, 23, 59, 59, 999);
+        } else if (filterType === 'year' && year) {
+            const yearNum = parseInt(year as string);
+            startFilterDate = new Date(yearNum, 0, 1);
+            endFilterDate = new Date(yearNum, 11, 31, 23, 59, 59, 999);
+        } else if (date) {
+            // Legacy support for single date (monthly filter)
+            const filterDate = new Date(date as string);
+            startFilterDate = new Date(filterDate.getFullYear(), filterDate.getMonth(), 1);
+            endFilterDate = new Date(filterDate.getFullYear(), filterDate.getMonth() + 1, 0, 23, 59, 59, 999);
+        }
+
+        const whereClause: any = {
+            booking: { storeId: parseInt(id) }
+        };
+        
+        // Add date filters
+        if (startFilterDate && endFilterDate) {
+            whereClause.createdAt = {
+                gte: startFilterDate,
+                lte: endFilterDate,
+            };
+        }
+
         const bookingLogs = await prisma.bookingOvers.findMany({
-            where: {booking: {storeId: parseInt(id)}},
+            where: whereClause,
             include: {booking: {include: {store: {select: {name: true}}, customer: {select: {name: true, email: true}}}}, employee: {select: {name: true, email: true}}},
             orderBy: {createdAt: 'desc'}
         });

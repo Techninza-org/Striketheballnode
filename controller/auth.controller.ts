@@ -168,42 +168,67 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
 
 const dashboardDetails = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { date } = req.query;
-      const filterDate = date ? new Date(date as string) : null;
-  
-      const monthStartDate = filterDate
-        ? new Date(filterDate.getFullYear(), filterDate.getMonth(), 1)
-        : null;
-  
-      const monthEndDate = filterDate
-        ? new Date(filterDate.getFullYear(), filterDate.getMonth() + 1, 0, 23, 59, 59)
-        : null;
+      const { date, startDate, endDate, month, year, filterType, storeId } = req.query;
+      
+      let startFilterDate = null;
+      let endFilterDate = null;
+      
+      // Handle different filter types
+      if (filterType === 'dateRange' && startDate && endDate) {
+        startFilterDate = new Date(startDate as string);
+        endFilterDate = new Date(endDate as string);
+        endFilterDate.setHours(23, 59, 59, 999); // End of day
+      } else if (filterType === 'month' && month && year) {
+        const monthNum = parseInt(month as string) - 1; // Month is 0-indexed
+        const yearNum = parseInt(year as string);
+        startFilterDate = new Date(yearNum, monthNum, 1);
+        endFilterDate = new Date(yearNum, monthNum + 1, 0, 23, 59, 59, 999);
+      } else if (filterType === 'year' && year) {
+        const yearNum = parseInt(year as string);
+        startFilterDate = new Date(yearNum, 0, 1);
+        endFilterDate = new Date(yearNum, 11, 31, 23, 59, 59, 999);
+      } else if (date) {
+        // Legacy support for single date (monthly filter)
+        const filterDate = new Date(date as string);
+        startFilterDate = new Date(filterDate.getFullYear(), filterDate.getMonth(), 1);
+        endFilterDate = new Date(filterDate.getFullYear(), filterDate.getMonth() + 1, 0, 23, 59, 59, 999);
+      }
   
       const stores = await prisma.store.findMany();
-      const employees = await prisma.employee.findMany();
+      const employees = await prisma.employee.findMany({
+        where: storeId ? { storeId: parseInt(storeId as string) } : undefined
+      });
   
       const bookings = await prisma.booking.findMany({
-        where: filterDate
-          ? {
-              createdAt: {
-                gte: monthStartDate!,
-                lte: monthEndDate!,
-              },
-            }
-          : undefined,
+        where: {
+          ...(startFilterDate && endFilterDate && {
+            createdAt: {
+              gte: startFilterDate,
+              lte: endFilterDate,
+            },
+          }),
+          ...(storeId && { storeId: parseInt(storeId as string) }),
+        },
       });
   
       const packages = await prisma.package.findMany();
   
       const customers = await prisma.customer.findMany({
-        where: filterDate
-          ? {
-              createdAt: {
-                gte: monthStartDate!,
-                lte: monthEndDate!,
-              },
+        where: {
+          ...(startFilterDate && endFilterDate && {
+            createdAt: {
+              gte: startFilterDate,
+              lte: endFilterDate,
+            },
+          }),
+          ...(storeId && {
+            bookings: {
+              some: {
+                storeId: parseInt(storeId as string)
+              }
             }
-          : undefined,
+          }),
+        },
       });
   
       const todayFollowUps = await prisma.lead.count({
@@ -218,23 +243,39 @@ const dashboardDetails = async (req: Request, res: Response, next: NextFunction)
             gte: new Date(new Date().setHours(0, 0, 0)),
             lte: new Date(new Date().setHours(23, 59, 59)),
           },
+          ...(storeId && {
+            bookings: {
+              some: {
+                storeId: parseInt(storeId as string)
+              }
+            }
+          }),
         },
       });
   
       const monthLeads = await prisma.customer.count({
-        where: filterDate
-          ? {
-              createdAt: {
-                gte: monthStartDate!,
-                lte: monthEndDate!,
-              },
+        where: {
+          ...(startFilterDate && endFilterDate
+            ? {
+                createdAt: {
+                  gte: startFilterDate,
+                  lte: endFilterDate,
+                },
+              }
+            : {
+                createdAt: {
+                  gte: new Date(new Date().setDate(new Date().getDate() - 30)),
+                  lte: new Date(),
+                },
+              }),
+          ...(storeId && {
+            bookings: {
+              some: {
+                storeId: parseInt(storeId as string)
+              }
             }
-          : {
-              createdAt: {
-                gte: new Date(new Date().setDate(new Date().getDate() - 30)),
-                lte: new Date(),
-              },
-            },
+          }),
+        },
       });
   
       const sources = await prisma.source.findMany();
@@ -244,11 +285,20 @@ const dashboardDetails = async (req: Request, res: Response, next: NextFunction)
           const leadsCount = await prisma.lead.count({
             where: {
               source: source.name,
-              ...(filterDate && {
+              ...(startFilterDate && endFilterDate && {
                 createdAt: {
-                  gte: monthStartDate!,
-                  lte: monthEndDate!,
+                  gte: startFilterDate,
+                  lte: endFilterDate,
                 },
+              }),
+              ...(storeId && {
+                customer: {
+                  bookings: {
+                    some: {
+                      storeId: parseInt(storeId as string)
+                    }
+                  }
+                }
               }),
             },
           });
@@ -266,11 +316,20 @@ const dashboardDetails = async (req: Request, res: Response, next: NextFunction)
           const leadsCount = await prisma.lead.count({
             where: {
               stage: stage.name,
-              ...(filterDate && {
+              ...(startFilterDate && endFilterDate && {
                 createdAt: {
-                  gte: monthStartDate!,
-                  lte: monthEndDate!,
+                  gte: startFilterDate,
+                  lte: endFilterDate,
                 },
+              }),
+              ...(storeId && {
+                customer: {
+                  bookings: {
+                    some: {
+                      storeId: parseInt(storeId as string)
+                    }
+                  }
+                }
               }),
             },
           });
@@ -282,17 +341,19 @@ const dashboardDetails = async (req: Request, res: Response, next: NextFunction)
       );
   
       let storeRevenue = [];
-      for (let i = 0; i < stores.length; i++) {
-        const storeId = stores[i].id;
-        const storeName = stores[i].name;
+      const storesToProcess = storeId ? stores.filter(store => store.id === parseInt(storeId as string)) : stores;
+      
+      for (let i = 0; i < storesToProcess.length; i++) {
+        const storeId = storesToProcess[i].id;
+        const storeName = storesToProcess[i].name;
   
         const bookings = await prisma.booking.findMany({
           where: {
             storeId: storeId,
-            ...(filterDate && {
+            ...(startFilterDate && endFilterDate && {
               createdAt: {
-                gte: monthStartDate!,
-                lte: monthEndDate!,
+                gte: startFilterDate,
+                lte: endFilterDate,
               },
             }),
           },
@@ -331,6 +392,8 @@ const dashboardDetails = async (req: Request, res: Response, next: NextFunction)
         stages: stagesWithLeads,
         todayFollowUps: todayFollowUps,
         revenue: storeRevenue,
+        allStores: stores, // Include all stores for frontend dropdown
+        selectedStoreId: storeId ? parseInt(storeId as string) : null,
       });
     } catch (err) {
       return next(err);
