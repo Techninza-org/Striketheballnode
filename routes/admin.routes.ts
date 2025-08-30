@@ -105,5 +105,11 @@ adminRouter.get('/banner', middleware.AdminMiddleware, adminController.getAllBan
 adminRouter.delete('/banner/:id', middleware.AdminMiddleware, adminController.deleteBannerById)
 //@ts-ignore
 adminRouter.post('/send-notification', middleware.AdminMiddleware, adminController.sendGlobalNotification)
+//@ts-ignore
+adminRouter.get('/booking/filter/price', middleware.AdminMiddleware, adminController.getAllPackagePriceArray)
+//@ts-ignore
+adminRouter.get('/booking/filter/price/:price', middleware.AdminMiddleware, adminController.getBookingsByPrice)
+//@ts-ignore
+adminRouter.get('/booking/mark/closed/:id', middleware.AdminMiddleware, adminController.markBookingAsClosed)
 
 export default adminRouter

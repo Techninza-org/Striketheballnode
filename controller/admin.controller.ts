@@ -1445,9 +1445,49 @@ async function sendGlobalNotification(req: ExtendedRequest, res: Response, next:
     }
 }
 
+async function getAllPackagePriceArray(req: ExtendedRequest, res: Response, next: NextFunction) {
+    try {
+        const packages = await prisma.booking.findMany();
+        const packagePriceArray = packages.map((p) => p.price);
+        const uniquePackagePriceArray = [...new Set(packagePriceArray)];
+        return res.status(200).send({ valid: true, price: uniquePackagePriceArray });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+async function markBookingAsClosed(req: ExtendedRequest, res: Response, next: NextFunction) {
+    try {
+        const { id } = req.params;
+        const booking = await prisma.booking.findFirst({ where: { id: parseInt(id) } });
+        if(!booking) {
+            return res.status(400).send({ valid: false, error: 'Booking not found.' });
+        }
+        const isBookingAlreadyClosed = booking.status === 'COMPLETED';
+        if(isBookingAlreadyClosed) {
+            return res.status(400).send({ valid: false, error: 'Booking is already closed.' });
+        }
+        const updatedBooking = await prisma.booking.update({ where: { id: parseInt(id) }, data: { status: 'COMPLETED' } });
+        return res.status(200).send({ valid: true, booking });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+async function getBookingsByPrice(req: ExtendedRequest, res: Response, next: NextFunction) {
+    try {
+        const { price } = req.params;
+        const bookings = await prisma.booking.findMany({ where: { price: parseInt(price) } });
+        return res.status(200).send({ valid: true, bookings });
+    } catch (err) {
+        return next(err);
+    }
+}
 
 const adminController = {
         sendGlobalNotification,
+        getAllPackagePriceArray,
+        getBookingsByPrice,
         addBanner,
         getAllBanners,
         deleteBannerById,
@@ -1497,6 +1537,7 @@ const adminController = {
         getBookingsRevenueStoreWise,
         deleteBookingById,
         updateBookingOvers,
-        updateBookingPrice
+        updateBookingPrice,
+        markBookingAsClosed
     }
 export default adminController
