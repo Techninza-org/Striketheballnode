@@ -1445,6 +1445,27 @@ async function sendGlobalNotification(req: ExtendedRequest, res: Response, next:
     }
 }
 
+async function getAllNotifications(req: ExtendedRequest, res: Response, next: NextFunction) {
+    try {
+        const notifications = await prisma.globalNotification.findMany({orderBy: {createdAt: 'desc'}});
+        return res.status(200).send({ valid: true, notifications });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+async function deleteNotificationById (req: ExtendedRequest, res: Response, next: NextFunction) {
+    try {
+        const { id } = req.params;
+        const notification = await prisma.globalNotification.delete({
+            where: { id: parseInt(id) }
+        });
+        return res.status(200).send({ valid: true, notification });
+    } catch (err) {
+        return next(err);
+    }
+}
+
 async function getAllPackagePriceArray(req: ExtendedRequest, res: Response, next: NextFunction) {
     try {
         const packages = await prisma.booking.findMany();
@@ -1484,8 +1505,28 @@ async function getBookingsByPrice(req: ExtendedRequest, res: Response, next: Nex
     }
 }
 
+async function updateBookingOversCreatedAtDate(req: ExtendedRequest, res: Response, next: NextFunction) {
+    try {
+        const { id } = req.params;
+        const { createdAt } = req.body;
+        if(!createdAt) {
+            return res.status(400).send({ valid: false, error: 'Created at is required.' });
+        }
+        const booking = await prisma.bookingOvers.update({ where: { id: parseInt(id) }, data: { createdAt: new Date(createdAt) } });
+        const book = await prisma.booking.findUnique({ where: { id: booking.bookingId } });
+        if(!book) {
+            return res.status(400).send({ valid: false, error: 'Booking not found.' });
+        }
+        const updatedBooking = await prisma.booking.update({ where: { id: book.id }, data: { lastPlayedDate: new Date(createdAt) } });
+        return res.status(200).send({ valid: true, booking });
+    } catch (err) {
+        return next(err);
+    }
+}
+
 const adminController = {
         sendGlobalNotification,
+        updateBookingOversCreatedAtDate,
         getAllPackagePriceArray,
         getBookingsByPrice,
         addBanner,
@@ -1538,6 +1579,8 @@ const adminController = {
         deleteBookingById,
         updateBookingOvers,
         updateBookingPrice,
-        markBookingAsClosed
+        markBookingAsClosed,
+        getAllNotifications,
+        deleteNotificationById
     }
 export default adminController

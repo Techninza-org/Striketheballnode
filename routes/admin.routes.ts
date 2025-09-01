@@ -72,6 +72,8 @@ adminRouter.get('/booking/details/:id', middleware.AdminMiddleware, adminControl
 //@ts-ignore
 adminRouter.get('/booking/logs/all', middleware.AdminMiddleware, adminController.getBookingLogs)
 //@ts-ignore
+adminRouter.put('/booking/overs/createdAt/:id', middleware.AdminMiddleware, adminController.updateBookingOversCreatedAtDate)
+//@ts-ignore
 adminRouter.get('/booking/logs/store/:id', middleware.AdminMiddleware, adminController.getBookingLogsByStoreId)
 //@ts-ignore
 adminRouter.get('/booking/logs/customer/:id', middleware.AdminMiddleware, adminController.getBookingLogsByCustomerId)
@@ -105,6 +107,10 @@ adminRouter.get('/banner', middleware.AdminMiddleware, adminController.getAllBan
 adminRouter.delete('/banner/:id', middleware.AdminMiddleware, adminController.deleteBannerById)
 //@ts-ignore
 adminRouter.post('/send-notification', middleware.AdminMiddleware, adminController.sendGlobalNotification)
+//@ts-ignore
+adminRouter.get('/notifications', middleware.AdminMiddleware, adminController.getAllNotifications)
+//@ts-ignore
+adminRouter.delete('/notifications/:id', middleware.AdminMiddleware, adminController.deleteNotificationById)
 //@ts-ignore
 adminRouter.get('/booking/filter/price', middleware.AdminMiddleware, adminController.getAllPackagePriceArray)
 //@ts-ignore

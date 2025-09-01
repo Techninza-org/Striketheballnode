@@ -289,6 +289,18 @@ const addReview = async (req: ExtendedRequest, res: Response, next: NextFunction
     }
 }
 
+const getNotifications = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try{
+        const notifications = await prisma.globalNotification.findMany({
+            orderBy: {
+                createdAt: 'desc'
+            }
+        })
+    }catch(err){
+        return next(err);
+    }
+}
+
 const userController = {
     getProfile,
     updateProfile,
@@ -297,7 +309,8 @@ const userController = {
     getPackages,
     getBookings,
     searchPackages,
-    addReview
+    addReview,
+    getNotifications
 }
 
 export default userController
