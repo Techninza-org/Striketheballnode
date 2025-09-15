@@ -499,6 +499,8 @@ const sendOtp = async (req: Request, res: Response, next: NextFunction) => {
 const userLogin = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { phone, otp } = req.body
+        console.log(req.body, 'userlogin');
+        
         if (!phone || !otp) {
             return res.status(400).send({ status: 400, error: 'Invalid payload', error_description: 'phone and otp are required.' })
         }
