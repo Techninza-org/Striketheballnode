@@ -477,18 +477,27 @@ const sendOtp = async (req: Request, res: Response, next: NextFunction) => {
             return res.status(400).send({ status: 400, error: 'Invalid payload', error_description: 'phone should be a 10 digit number.' })
         }
 
-        const otp = Math.floor(1000 + Math.random() * 9000).toString()
-        // const otp = 1234;
+        const otp = Math.floor(1000 + Math.random() * 9000)
 
-        // await prisma.otp.create({
-        //     data: {
-        //         phone: phone,
-        //         otp: otp,
-        //     },
-        // })
+        const dbOtpExists = await prisma.otp.findFirst({
+            where: { phone: phone },
+            orderBy: { createdAt: 'desc' },
+        })
+        if (dbOtpExists) {
+            await prisma.otp.deleteMany({
+                where: { phone: phone },
+            })
+        }
+
+        await prisma.otp.create({
+            data: {
+                phone: phone,
+                otp: otp,
+            },
+        })
 
         // Send OTP via SMS (using Twilio or any other service)
-        const message = helper.sendOtpViaSms(phone, otp)
+        const message = helper.sendOtpViaSms(phone, otp.toString())
 
         return res.status(200).send({ status: 200, message: 'Ok', phone, otp })
     } catch (err) {
@@ -513,7 +522,12 @@ const userLogin = async (req: Request, res: Response, next: NextFunction) => {
             return res.status(400).send({ status: 400, error: 'Invalid payload', error_description: 'otp should be a 4 digit number.' })
         }
 
-        const isValidOtp = otp === "1234";
+        const otpInDb = await prisma.otp.findFirst({
+            where: { phone: phone },
+            orderBy: { createdAt: 'desc' },
+        })
+
+        const isValidOtp = otp === otpInDb?.otp;
         if (!isValidOtp) {
             return res.status(400).send({ status: 400, error: 'Invalid OTP', error_description: 'otp is not valid.' })
         }
