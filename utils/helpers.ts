@@ -1,5 +1,6 @@
 // import nodemailer from 'nodemailer'
 
+import axios from 'axios';
 import multer from 'multer';
 
 const storage = multer.memoryStorage();
@@ -53,6 +54,25 @@ const imageUrlGen = (filePath: string) => {
     const gen_url = process.env.BACKEND_BASE_URL! + + "/images/" + filePath;
     return gen_url
 }
-const helper = { isValidatePaylod, isValidDateFormat, imageUrlGen }
+
+const sendOtpViaSms = (phone: string, otp: string) => {
+    console.log(`Sending OTP ${otp} to mobile number ${phone}`);
+    var options = {
+        method: 'GET',
+        url: 'https://console.authkey.io/request',
+        qs: {
+            authkey: process.env.AUTH_KEY, 
+            sms: `Your OTP is ${otp}`, 
+            mobile: phone, 
+            country_code: '91',
+            sender: 'SBALLT' 
+        },
+    };
+
+    const res = axios.get(options.url, { params: options.qs });
+    return true
+}
+
+const helper = { isValidatePaylod, isValidDateFormat, imageUrlGen, sendOtpViaSms }
 export default helper
 
